@@ -1,12 +1,13 @@
+
 'use server';
 
 import { suggestTags as suggestTagsAI, type SuggestTagsInput } from '@/ai/flows/ai-tag-suggestions';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, getFirestore } from 'firebase/firestore';
+import { collection, addDoc, getFirestore }from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
-import { getApps, initializeApp, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
 const uploadSchema = z.object({
@@ -17,14 +18,17 @@ const uploadSchema = z.object({
   image: z.any().refine(file => file?.size > 0, "Design file is required."),
 });
 
-// Helper to initialize Firebase on the server, ensuring all config is present
+// Helper to initialize Firebase on the server, ensuring it's a singleton.
 function initializeServerFirebase() {
-  if (!getApps().length) {
-    // We must use the full config object here for server-side initialization
-    return initializeApp(firebaseConfig);
+  const appName = 'server-upload-app';
+  const existingApp = getApps().find(app => app.name === appName);
+  if (existingApp) {
+    return getApp(appName);
   }
-  return getApp();
+  // We must use the full config object here for server-side initialization
+  return initializeApp(firebaseConfig, appName);
 }
+
 
 export async function uploadDesign(formData: FormData, userId: string) {
   'use server';
