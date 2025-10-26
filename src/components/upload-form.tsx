@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, type ComponentProps } from 'react';
+import { useState, useTransition, type ComponentProps, useRef } from 'react';
 import { useFormState } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,31 +19,32 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Wand2, X } from 'lucide-react';
+import { Loader2, Wand2, X, Image as ImageIcon } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
   description: z.string().min(20, 'Description must be at least 20 characters to get AI suggestions.'),
   price: z.coerce.number().min(1, 'Price must be at least $1.'),
   tags: z.array(z.string()).min(1, 'Please add at least one tag.'),
+  image: z.any().refine(file => file instanceof File && file.size > 0, "Design file is required."),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
 
-function SubmitButton(props: ComponentProps<typeof Button>) {
-    const [pending, startTransition] = useTransition();
-    return <Button type="submit" disabled={pending} {...props} />;
-}
-
 export function UploadForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isSubmitting, startTransition] = useTransition();
+
   const { toast } = useToast();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(uploadSchema),
@@ -109,35 +110,87 @@ export function UploadForm() {
     formData.append('description', values.description);
     formData.append('price', String(values.price));
     values.tags.forEach(tag => formData.append('tags[]', tag));
-    // In a real app, you would append the file:
-    // formData.append('image', imageFile);
+    formData.append('image', values.image);
 
-    const result = await uploadDesign(formData);
+    startTransition(async () => {
+      const result = await uploadDesign(formData);
 
-    if (result?.success) {
-      toast({
-        title: "Design Uploaded!",
-        description: "Your design is now live on the platform.",
-      });
-      router.push('/');
-    } else if (result?.errors) {
-        // Handle server-side validation errors
-        // This is a basic implementation.
-        Object.entries(result.errors).forEach(([field, messages]) => {
-            form.setError(field as keyof UploadFormValues, {
-                type: 'server',
-                message: (messages as string[]).join(', '),
-            });
+      if (result?.success) {
+        toast({
+          title: "Design Uploaded!",
+          description: "Your design is now live on the platform.",
         });
-    }
+        router.push('/my-designs');
+      } else if (result?.errors) {
+          // Handle server-side validation errors
+          Object.entries(result.errors).forEach(([field, messages]) => {
+              if (field === '_form') {
+                 toast({ variant: 'destructive', title: 'Upload Failed', description: (messages as string[]).join(', ') });
+              } else {
+                form.setError(field as keyof UploadFormValues, {
+                    type: 'server',
+                    message: (messages as string[]).join(', '),
+                });
+              }
+          });
+      }
+    });
   }
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      form.setValue('image', file, { shouldValidate: true });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+        form.setValue('image', undefined, { shouldValidate: true });
+        setImagePreview(null);
+    }
+  };
 
   return (
     <Card>
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Design File</FormLabel>
+                   <FormControl>
+                    <div
+                        className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={handleFileChange}
+                            accept="image/png, image/jpeg, image/webp"
+                        />
+                        {imagePreview ? (
+                            <Image src={imagePreview} alt="Design preview" fill className="object-contain rounded-lg" />
+                        ) : (
+                            <div className="text-center text-muted-foreground">
+                                <ImageIcon className="mx-auto h-12 w-12" />
+                                <p className="mt-2">Click or drag file to this area to upload</p>
+                                <p className="text-xs">PNG, JPG, WEBP up to 10MB</p>
+                            </div>
+                        )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="title"
@@ -194,7 +247,7 @@ export function UploadForm() {
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                       />
-                       <div className="mt-2 flex flex-wrap gap-2">
+                       <div className="mt-2 flex flex-wrap gap-2 min-h-[24px]">
                         {tags.map(tag => (
                           <Badge key={tag} variant="secondary">
                             {tag}
@@ -230,20 +283,10 @@ export function UploadForm() {
                 </FormItem>
               )}
             />
-            
-            {/* Mock File Upload */}
-            <FormItem>
-              <FormLabel>Design File</FormLabel>
-              <FormControl>
-                <Input type="file" disabled />
-              </FormControl>
-              <FormDescription>
-                File uploads are currently disabled. This is a UI demonstration.
-              </FormDescription>
-            </FormItem>
 
-            <Button type="submit" size="lg" className="w-full">
-              Upload Design
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Uploading...' : 'Upload Design'}
             </Button>
           </form>
         </Form>
