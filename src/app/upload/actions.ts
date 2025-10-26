@@ -17,9 +17,10 @@ const uploadSchema = z.object({
   image: z.any().refine(file => file?.size > 0, "Design file is required."),
 });
 
-// Helper to initialize Firebase on the server
+// Helper to initialize Firebase on the server, ensuring all config is present
 function initializeServerFirebase() {
   if (!getApps().length) {
+    // We must use the full config object here for server-side initialization
     return initializeApp(firebaseConfig);
   }
   return getApp();
