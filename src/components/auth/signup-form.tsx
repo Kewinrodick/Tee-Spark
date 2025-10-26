@@ -72,7 +72,7 @@ export function SignupForm() {
       const user = userCredential.user;
 
       const userRef = doc(firestore, "users", user.uid);
-      setDocumentNonBlocking(userRef, {
+      await setDoc(userRef, {
         id: user.uid,
         email: values.email,
         username: values.username,

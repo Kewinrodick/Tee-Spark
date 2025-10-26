@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { PurchaseButton } from "@/components/purchase-button";
 
 export default async function DesignPage({ params }: { params: { id: string } }) {
   const design = await getDesignById(params.id);
@@ -66,10 +67,7 @@ export default async function DesignPage({ params }: { params: { id: string } })
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="text-4xl font-bold text-primary">${design.price}</div>
-            <Button size="lg" className="w-full sm:w-auto text-lg py-6 px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow">
-              <ShoppingCart className="mr-3 h-6 w-6" />
-              Purchase License
-            </Button>
+            <PurchaseButton design={design} />
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
-import { Upload, LogOut, User as UserIcon } from 'lucide-react';
+import { Upload, LogOut, User as UserIcon, LayoutGrid, Heart, ShoppingBag } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -34,28 +34,33 @@ export function Header() {
             <Logo />
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+             <Link href="/" className="transition-colors hover:text-primary text-foreground/80">
+              Home
+            </Link>
             <Link href="/" className="transition-colors hover:text-primary text-foreground/80">
-              Designs
+              Trending
             </Link>
-            <Link href="/upload" className="transition-colors hover:text-primary text-foreground/80">
-              Upload
-            </Link>
+            {user && (
+                 <Link href="/my-designs" className="transition-colors hover:text-primary text-foreground/80">
+                    My Designs
+                </Link>
+            )}
           </nav>
         </div>
-        <nav className="flex items-center">
-          <Button asChild className="hidden md:flex">
-            <Link href="/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Design
-            </Link>
-          </Button>
-
+        <nav className="flex items-center gap-2">
           {isUserLoading ? (
-             <Skeleton className="h-10 w-24 ml-2" />
+             <Skeleton className="h-10 w-24" />
           ) : user ? (
+            <>
+            <Button asChild>
+                <Link href="/upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload
+                </Link>
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full ml-2">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`} alt={user.displayName || user.email || 'User'} />
                     <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
@@ -65,16 +70,36 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                  <Link href="/my-designs">
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    <span>My Designs</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                  <Link href="/purchases">
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    <span>My Purchases</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                  <Link href="/favorites">
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Favorites</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -83,12 +108,13 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
             <>
-              <Button variant="ghost" asChild className="ml-2">
+              <Button variant="ghost" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button variant="outline" asChild className="ml-2">
+              <Button asChild>
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>

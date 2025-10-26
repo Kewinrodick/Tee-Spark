@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative bg-background text-foreground">
+    <section className="relative bg-background text-foreground" id="hero">
       <div className="container mx-auto px-4 py-24 text-center md:py-32 lg:py-48">
         <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
         <div className="absolute left-0 top-0 -z-10 h-2/3 w-full bg-gradient-to-b from-primary/5 via-primary/10 to-transparent"></div>
@@ -24,7 +24,7 @@ export function Hero() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="text-lg">
-            <Link href="#designs">Browse Designs</Link>
+            <Link href="#trending-designs">Browse Designs</Link>
           </Button>
         </div>
       </div>

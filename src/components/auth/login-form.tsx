@@ -23,7 +23,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth, initiateEmailSignIn } from "@/firebase";
+import { useAuth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError, signInWithEmailAndPassword } from "firebase/auth";
@@ -59,7 +59,7 @@ export function LoginForm() {
     } catch (error) {
       const authError = error as AuthError;
       let errorMessage = "An unexpected error occurred. Please try again.";
-      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
+      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid email or password. Please try again.';
       } else if (authError.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
