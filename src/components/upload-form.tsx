@@ -29,6 +29,7 @@ import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useUser } from '@/firebase';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -50,8 +51,9 @@ export function UploadForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false); // 👈 Fix for hydration mismatch
+  const [mounted, setMounted] = useState(false);
 
+  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +68,6 @@ export function UploadForm() {
     },
   });
 
-  // ✅ Ensure image preview only renders after hydration
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -120,6 +121,15 @@ export function UploadForm() {
   };
 
   async function onSubmit(values: UploadFormValues) {
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'You must be logged in to upload a design.',
+        });
+        return;
+    }
+
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('description', values.description);
@@ -170,8 +180,17 @@ export function UploadForm() {
     }
   };
 
-  // 🧩 Avoid SSR execution
   if (!mounted) return null;
+
+  if (!user) {
+    return (
+        <Card>
+            <CardContent className="p-6 text-center">
+                <p>Please <a href="/login" className="underline text-primary">log in</a> to upload a design.</p>
+            </CardContent>
+        </Card>
+    )
+  }
 
   return (
     <Card>
