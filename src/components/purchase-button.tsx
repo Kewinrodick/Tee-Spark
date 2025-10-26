@@ -5,12 +5,12 @@ import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { Design } from '@/lib/mock-data';
 import { generateAndEmailProof } from '@/lib/proof';
-import { ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, type ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
-export function PurchaseButton({ design, className, ...props }: { design: Design } & ComponentProps<'button'>) {
+export function PurchaseButton({ design, className, children, ...props }: { design: Design, children: React.ReactNode } & ComponentProps<'button'>) {
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -64,8 +64,8 @@ export function PurchaseButton({ design, className, ...props }: { design: Design
       disabled={isPurchasing}
       {...props}
     >
-      <ShoppingCart className="mr-2 h-5 w-5" />
-      {isPurchasing ? 'Processing...' : `Purchase - $${design.price}`}
+      {isPurchasing && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+      {isPurchasing ? 'Processing...' : children}
     </Button>
   );
 }

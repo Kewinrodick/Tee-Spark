@@ -1,3 +1,4 @@
+
 import { getDesignById } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { PurchaseButton } from "@/components/purchase-button";
+import Link from "next/link";
 
 export default async function DesignPage({ params }: { params: { id: string } }) {
   const design = await getDesignById(params.id);
@@ -66,7 +67,12 @@ export default async function DesignPage({ params }: { params: { id: string } })
           <Separator />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <PurchaseButton design={design} className="sm:w-auto text-lg py-6 px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow" />
+             <Button asChild size="lg" className="w-full sm:w-auto text-lg py-6 px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow">
+                <Link href={`/checkout/${design.id}`}>
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    Purchase - ${design.price}
+                </Link>
+            </Button>
           </div>
         </div>
       </div>
