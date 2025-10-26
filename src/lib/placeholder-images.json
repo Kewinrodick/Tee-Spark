@@ -1,3 +1,76 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "design-1",
+      "description": "Abstract geometric design",
+      "imageUrl": "https://images.unsplash.com/photo-1595411425732-e69c1abe2763?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGdlb21ldHJpY3xlbnwwfHx8fDE3NjE0MDg3MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract geometric"
+    },
+    {
+      "id": "design-2",
+      "description": "Cyberpunk cityscape art",
+      "imageUrl": "https://images.unsplash.com/photo-1604912364280-4a5f295cd988?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjeWJlcnB1bmslMjBjaXR5c2NhcGV8ZW58MHx8fHwxNzYxNDA0NDM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cyberpunk cityscape"
+    },
+    {
+      "id": "design-3",
+      "description": "Minimalist wave illustration",
+      "imageUrl": "https://images.unsplash.com/photo-1749877217773-6c844c38c874?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWluaW1hbGlzdCUyMHdhdmV8ZW58MHx8fHwxNzYxNDY1MzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist wave"
+    },
+    {
+      "id": "design-4",
+      "description": "Futuristic astronaut portrait",
+      "imageUrl": "https://images.unsplash.com/photo-1749215419683-23847ec40e9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmdXR1cmlzdGljJTIwYXN0cm9uYXV0fGVufDB8fHx8MTc2MTQxNjA1Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic astronaut"
+    },
+    {
+      "id": "design-5",
+      "description": "Glitch art effect design",
+      "imageUrl": "https://images.unsplash.com/photo-1610337673044-720471f83677?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnbGl0Y2glMjBhcnR8ZW58MHx8fHwxNzYxMzg5ODY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "glitch art"
+    },
+    {
+      "id": "design-6",
+      "description": "Retro synthwave landscape",
+      "imageUrl": "https://images.unsplash.com/photo-1641381612269-afde1eac2f96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzeW50aHdhdmUlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzYxMzY5MzU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "synthwave landscape"
+    },
+    {
+      "id": "design-7",
+      "description": "Cosmic whale in space",
+      "imageUrl": "https://images.unsplash.com/photo-1704741527281-0dc8007bb2be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y29zbWljJTIwd2hhbGV8ZW58MHx8fHwxNzYxNDY1MzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cosmic whale"
+    },
+    {
+      "id": "design-8",
+      "description": "Holographic skull graphic",
+      "imageUrl": "https://images.unsplash.com/photo-1628233296234-09bd9d958a69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxob2xvZ3JhcGhpYyUyMHNrdWxsfGVufDB8fHx8MTc2MTQ2NTMwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "holographic skull"
+    },
+    {
+      "id": "design-9",
+      "description": "Japanese style dragon",
+      "imageUrl": "https://images.unsplash.com/photo-1672327450308-190607d99316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxqYXBhbmVzZSUyMGRyYWdvbnxlbnwwfHx8fDE3NjE0NjUzMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "japanese dragon"
+    },
+    {
+      "id": "design-10",
+      "description": "Art deco pattern",
+      "imageUrl": "https://images.unsplash.com/photo-1561047741-8999b48b20d2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhcnQlMjBkZWNvfGVufDB8fHx8MTc2MTM4OTUwM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art deco"
+    },
+    {
+      "id": "design-11",
+      "description": "Neon light typography",
+      "imageUrl": "https://images.unsplash.com/photo-1700923915831-55e3cc946a8f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxuZW9uJTIwdHlwb2dyYXBoeXxlbnwwfHx8fDE3NjE0NjUzMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "neon typography"
+    },
+    {
+      "id": "design-12",
+      "description": "Organic cellular pattern",
+      "imageUrl": "https://images.unsplash.com/photo-1747579263364-872c1e4ecfd0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b3JnYW5pYyUyMHBhdHRlcm58ZW58MHx8fHwxNzYxNDY1MzA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "organic pattern"
+    }
+  ]
 }
