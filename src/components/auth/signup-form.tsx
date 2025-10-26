@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError, createUserWithEmailAndPassword } from "firebase/auth";
 import { doc } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 const signupSchema = z.object({
   username: z.string().min(2, "Name must be at least 2 characters."),
@@ -52,6 +53,11 @@ export function SignupForm() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -105,6 +111,10 @@ export function SignupForm() {
       console.error("Signup error:", authError);
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Card className="w-full max-w-sm">

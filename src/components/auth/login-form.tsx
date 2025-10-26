@@ -27,6 +27,7 @@ import { useAuth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError, signInWithEmailAndPassword } from "firebase/auth";
+import { useEffect, useState } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -39,6 +40,11 @@ export function LoginForm() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -73,6 +79,10 @@ export function LoginForm() {
       console.error("Login error:", authError);
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Card className="w-full max-w-sm">
