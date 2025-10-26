@@ -7,9 +7,10 @@ import type { Design } from '@/lib/mock-data';
 import { generateAndEmailProof } from '@/lib/proof';
 import { ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
+import { cn } from '@/lib/utils';
 
-export function PurchaseButton({ design }: { design: Design }) {
+export function PurchaseButton({ design, className, ...props }: { design: Design } & ComponentProps<'button'>) {
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -54,11 +55,12 @@ export function PurchaseButton({ design }: { design: Design }) {
   return (
     <Button
       size="lg"
-      className="w-full sm:w-auto text-lg py-6 px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
+      className={cn("w-full text-base py-3", className)}
       onClick={handlePurchase}
       disabled={isPurchasing}
+      {...props}
     >
-      <ShoppingCart className="mr-3 h-6 w-6" />
+      <ShoppingCart className="mr-2 h-5 w-5" />
       {isPurchasing ? 'Processing...' : 'Purchase License'}
     </Button>
   );

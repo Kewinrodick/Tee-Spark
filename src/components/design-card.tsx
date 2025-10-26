@@ -14,8 +14,8 @@ interface DesignCardProps {
 
 export function DesignCard({ design, className }: DesignCardProps) {
   return (
-      <Card className={cn("overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/20 group", className)}>
-        <Link href={`/designs/${design.id}`} className="block">
+      <Card className={cn("overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-primary/50 group border-transparent", className)}>
+        <Link href={`/designs/${design.id}`} className="block flex flex-col flex-grow">
           <CardHeader className="p-0">
             <div className="aspect-[3/4] overflow-hidden">
               <Image
@@ -39,10 +39,7 @@ export function DesignCard({ design, className }: DesignCardProps) {
               </Avatar>
               <span>{design.designer.name}</span>
             </div>
-          </CardContent>
-        </Link>
-        <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm">
-           <div className="flex gap-4 text-muted-foreground">
+             <div className="flex gap-4 text-muted-foreground mt-4 text-sm">
               <div className="flex items-center gap-1.5">
                 <Heart className="h-4 w-4" />
                 <span>{design.likes}</span>
@@ -52,6 +49,9 @@ export function DesignCard({ design, className }: DesignCardProps) {
                 <span>{design.commentsCount}</span>
               </div>
             </div>
+          </CardContent>
+        </Link>
+        <CardFooter className="p-4 pt-0">
             <PurchaseButton design={design} />
         </CardFooter>
       </Card>
