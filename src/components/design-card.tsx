@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Heart, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PurchaseButton } from "./purchase-button";
 
 interface DesignCardProps {
   design: Design;
@@ -51,9 +50,6 @@ export function DesignCard({ design, className }: DesignCardProps) {
             </div>
           </CardContent>
         </Link>
-        <CardFooter className="p-4 pt-0">
-            <PurchaseButton design={design} />
-        </CardFooter>
       </Card>
   );
 }
