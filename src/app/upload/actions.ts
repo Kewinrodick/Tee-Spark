@@ -4,8 +4,7 @@ import { suggestTags as suggestTagsAI, type SuggestTagsInput } from '@/ai/flows/
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { collection, addDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeFirebase } from '@/firebase/server-init';
 
@@ -20,19 +19,10 @@ const uploadSchema = z.object({
 export async function uploadDesign(formData: FormData) {
   'use server';
 
-  const { auth } = initializeFirebase();
-  const currentUser = auth.currentUser;
-
-  if (!currentUser) {
-    // This part of the code requires a user to be authenticated on the server.
-    // For this environment, we'll proceed assuming a mock user for demonstration.
-    // In a real app, you would enforce authentication here.
-    console.warn("User not authenticated on the server. This should be handled properly.");
-  }
-  
-  // A mock UID is used because `auth.currentUser` is often null in server actions without complex session management.
-  const userId = currentUser?.uid || 'mock-user-id';
-
+  // For this demo, we'll use a mock user ID as true server-side auth state
+  // is complex to manage without a full session setup. In a real app,
+  // you would get the authenticated user's ID securely.
+  const userId = 'mock-user-id'; // Replace with real auth logic later
 
   const rawData = {
     title: formData.get('title'),
