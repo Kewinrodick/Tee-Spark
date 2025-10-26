@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useTransition, type ComponentProps, useRef } from 'react';
-import { useFormState } from 'react-dom';
+import {
+  useState,
+  useTransition,
+  useRef,
+  useEffect,
+  type ComponentProps,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,10 +32,14 @@ import Image from 'next/image';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
-  description: z.string().min(20, 'Description must be at least 20 characters to get AI suggestions.'),
+  description: z
+    .string()
+    .min(20, 'Description must be at least 20 characters to get AI suggestions.'),
   price: z.coerce.number().min(1, 'Price must be at least $1.'),
   tags: z.array(z.string()).min(1, 'Please add at least one tag.'),
-  image: z.any().refine(file => file instanceof File && file.size > 0, "Design file is required."),
+  image: z
+    .any()
+    .refine((file) => file instanceof File && file.size > 0, 'Design file is required.'),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -41,6 +50,7 @@ export function UploadForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false); // 👈 Fix for hydration mismatch
 
   const { toast } = useToast();
   const router = useRouter();
@@ -56,6 +66,11 @@ export function UploadForm() {
     },
   });
 
+  // ✅ Ensure image preview only renders after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
@@ -70,11 +85,11 @@ export function UploadForm() {
   };
 
   const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
+    const newTags = tags.filter((tag) => tag !== tagToRemove);
     setTags(newTags);
     form.setValue('tags', newTags, { shouldValidate: true });
   };
-  
+
   const handleSuggestTags = async () => {
     const description = form.getValues('description');
     if (!description || description.length < 20) {
@@ -84,7 +99,7 @@ export function UploadForm() {
       });
       return;
     }
-    
+
     setIsSuggesting(true);
     try {
       const result = await getTagSuggestions({ designDescription: description });
@@ -94,9 +109,9 @@ export function UploadForm() {
         form.setValue('tags', newTags, { shouldValidate: true });
       } else if (result.error) {
         toast({
-            variant: "destructive",
-            title: "AI Suggestion Failed",
-            description: result.error,
+          variant: 'destructive',
+          title: 'AI Suggestion Failed',
+          description: result.error,
         });
       }
     } finally {
@@ -109,7 +124,7 @@ export function UploadForm() {
     formData.append('title', values.title);
     formData.append('description', values.description);
     formData.append('price', String(values.price));
-    values.tags.forEach(tag => formData.append('tags[]', tag));
+    values.tags.forEach((tag) => formData.append('tags[]', tag));
     formData.append('image', values.image);
 
     startTransition(async () => {
@@ -117,22 +132,25 @@ export function UploadForm() {
 
       if (result?.success) {
         toast({
-          title: "Design Uploaded!",
-          description: "Your design is now live on the platform.",
+          title: 'Design Uploaded!',
+          description: 'Your design is now live on the platform.',
         });
         router.push('/my-designs');
       } else if (result?.errors) {
-          // Handle server-side validation errors
-          Object.entries(result.errors).forEach(([field, messages]) => {
-              if (field === '_form') {
-                 toast({ variant: 'destructive', title: 'Upload Failed', description: (messages as string[]).join(', ') });
-              } else {
-                form.setError(field as keyof UploadFormValues, {
-                    type: 'server',
-                    message: (messages as string[]).join(', '),
-                });
-              }
-          });
+        Object.entries(result.errors).forEach(([field, messages]) => {
+          if (field === '_form') {
+            toast({
+              variant: 'destructive',
+              title: 'Upload Failed',
+              description: (messages as string[]).join(', '),
+            });
+          } else {
+            form.setError(field as keyof UploadFormValues, {
+              type: 'server',
+              message: (messages as string[]).join(', '),
+            });
+          }
+        });
       }
     });
   }
@@ -147,43 +165,52 @@ export function UploadForm() {
       };
       reader.readAsDataURL(file);
     } else {
-        form.setValue('image', undefined, { shouldValidate: true });
-        setImagePreview(null);
+      form.setValue('image', undefined, { shouldValidate: true });
+      setImagePreview(null);
     }
   };
+
+  // 🧩 Avoid SSR execution
+  if (!mounted) return null;
 
   return (
     <Card>
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Upload Section */}
             <FormField
               control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Design File</FormLabel>
-                   <FormControl>
+                  <FormControl>
                     <div
-                        className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => fileInputRef.current?.click()}
+                      className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg cursor-pointer hover:border-primary transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
                     >
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            onChange={handleFileChange}
-                            accept="image/png, image/jpeg, image/webp"
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/png, image/jpeg, image/webp"
+                      />
+                      {imagePreview ? (
+                        <Image
+                          src={imagePreview}
+                          alt="Design preview"
+                          fill
+                          className="object-contain rounded-lg"
                         />
-                        {imagePreview ? (
-                            <Image src={imagePreview} alt="Design preview" fill className="object-contain rounded-lg" />
-                        ) : (
-                            <div className="text-center text-muted-foreground">
-                                <ImageIcon className="mx-auto h-12 w-12" />
-                                <p className="mt-2">Click or drag file to this area to upload</p>
-                                <p className="text-xs">PNG, JPG, WEBP up to 10MB</p>
-                            </div>
-                        )}
+                      ) : (
+                        <div className="text-center text-muted-foreground">
+                          <ImageIcon className="mx-auto h-12 w-12" />
+                          <p className="mt-2">Click or drag file to this area to upload</p>
+                          <p className="text-xs">PNG, JPG, WEBP up to 10MB</p>
+                        </div>
+                      )}
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -191,6 +218,7 @@ export function UploadForm() {
               )}
             />
 
+            {/* Title */}
             <FormField
               control={form.control}
               name="title"
@@ -205,6 +233,7 @@ export function UploadForm() {
               )}
             />
 
+            {/* Description */}
             <FormField
               control={form.control}
               name="description"
@@ -222,7 +251,8 @@ export function UploadForm() {
                 </FormItem>
               )}
             />
-            
+
+            {/* Tags */}
             <FormField
               control={form.control}
               name="tags"
@@ -230,7 +260,13 @@ export function UploadForm() {
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <FormLabel>Tags</FormLabel>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleSuggestTags} disabled={isSuggesting}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSuggestTags}
+                      disabled={isSuggesting}
+                    >
                       {isSuggesting ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
@@ -247,12 +283,16 @@ export function UploadForm() {
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                       />
-                       <div className="mt-2 flex flex-wrap gap-2 min-h-[24px]">
-                        {tags.map(tag => (
+                      <div className="mt-2 flex flex-wrap gap-2 min-h-[24px]">
+                        {tags.map((tag) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
-                            <button type="button" onClick={() => removeTag(tag)} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                             </button>
                           </Badge>
                         ))}
@@ -260,13 +300,15 @@ export function UploadForm() {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Add tags to help buyers discover your design. You can type them manually or use AI suggestions.
+                    Add tags to help buyers discover your design. You can type them manually or
+                    use AI suggestions.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Price */}
             <FormField
               control={form.control}
               name="price"
@@ -274,9 +316,11 @@ export function UploadForm() {
                 <FormItem>
                   <FormLabel>Price</FormLabel>
                   <FormControl>
-                     <div className="relative">
-                        <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground">$</span>
-                        <Input type="number" placeholder="25" className="pl-7" {...field} />
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+                        $
+                      </span>
+                      <Input type="number" placeholder="25" className="pl-7" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -284,6 +328,7 @@ export function UploadForm() {
               )}
             />
 
+            {/* Submit */}
             <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Uploading...' : 'Upload Design'}
