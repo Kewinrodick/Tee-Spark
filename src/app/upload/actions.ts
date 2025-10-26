@@ -4,9 +4,10 @@ import { suggestTags as suggestTagsAI, type SuggestTagsInput } from '@/ai/flows/
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getFirestore } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeFirebase } from '@/firebase/server-init';
+import { getApps, initializeApp, getApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
 const uploadSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -16,12 +17,17 @@ const uploadSchema = z.object({
   image: z.any().refine(file => file?.size > 0, "Design file is required."),
 });
 
+// Helper to initialize Firebase on the server
+function initializeServerFirebase() {
+  if (!getApps().length) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
+}
+
 export async function uploadDesign(formData: FormData) {
   'use server';
 
-  // For this demo, we'll use a mock user ID as true server-side auth state
-  // is complex to manage without a full session setup. In a real app,
-  // you would get the authenticated user's ID securely.
   const userId = 'mock-user-id'; // Replace with real auth logic later
 
   const rawData = {
@@ -43,18 +49,19 @@ export async function uploadDesign(formData: FormData) {
   const { title, description, price, tags, image } = validatedFields.data;
 
   try {
-    const { storage, firestore } = initializeFirebase();
+    const firebaseApp = initializeServerFirebase();
+    const storage = getStorage(firebaseApp);
+    const firestore = getFirestore(firebaseApp);
+    
     const imageId = uuidv4();
     const storageRef = ref(storage, `designs/${userId}/${imageId}`);
     
-    // Convert blob to buffer for upload
     const arrayBuffer = await image.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
     await uploadBytes(storageRef, buffer, { contentType: image.type });
     const imageUrl = await getDownloadURL(storageRef);
 
-    // Save metadata to Firestore
     await addDoc(collection(firestore, "designs"), {
       title,
       description,
@@ -79,7 +86,6 @@ export async function uploadDesign(formData: FormData) {
 }
 
 export async function getTagSuggestions(input: SuggestTagsInput) {
-  // Rate limiting and other security checks would be important here in a real app.
   try {
     const result = await suggestTagsAI(input);
     return { tags: result.tags };
