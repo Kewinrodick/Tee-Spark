@@ -40,6 +40,10 @@ export function PurchaseButton({ design, className, ...props }: { design: Design
         title: 'Purchase Successful!',
         description: `Proof of purchase for "${design.title}" has been sent to your email.`,
       });
+      
+      // Redirect to success page
+      router.push('/purchase-success');
+
     } catch (error) {
       console.error('Failed to generate or email proof:', error);
       toast({
