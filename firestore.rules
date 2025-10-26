@@ -1,0 +1,246 @@
+/**
+ * @fileoverview Firestore Security Rules for TeeSpark.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a user-ownership model for user profiles and resources created by users (designs, comments, likes, purchases).
+ * It also supports public read access to designs while restricting write access to the owner/designer of the design.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles, with 'userId' matching the Firebase Auth UID.
+ * - /designs/{designId}: Stores design data, with a 'designerId' field indicating ownership.
+ * - /designs/{designId}/comments/{commentId}: Stores comments on designs, with a 'userId' indicating authorship.
+ * - /designs/{designId}/likes/{likeId}: Stores likes on designs, with a 'userId' indicating who liked the design.
+ * - /purchases/{purchaseId}: Stores purchase records, with a 'buyerId' indicating who made the purchase.
+ * - /roles_admin/{userId}: Indicates administrative privileges.
+ *
+ * Key Security Decisions:
+ * - Users can only read/write their own profile data under /users/{userId}.
+ * - Designs are publicly readable, but only the designer can modify or delete them.
+ * - Comments can only be created by authenticated users, and only the author can modify/delete them.
+ * - Likes can only be created by authenticated users, and only the user can delete their like.
+ * - Purchases can only be created by authenticated users, and only the buyer can modify or delete them.
+ * - Listing user documents is disallowed.
+ * - Admin privileges are granted to users with a document in the /roles_admin collection.
+ *
+ * Denormalization for Authorization:
+ * The rules rely on the 'designerId', 'buyerId', and 'userId' fields within the documents to determine ownership, avoiding the need for extra reads.
+ *
+ * Structural Segregation:
+ * User-specific data is stored under /users/{userId} to ensure private access. Designs are stored in a top-level collection for public read access.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profile data.
+     * @path /users/{userId}
+     * @allow (create) Authenticated user creates their own profile with matching UID.
+     * @allow (get, update, delete) Authenticated user accesses their own profile with matching UID.
+     * @deny (create) Authenticated user attempts to create a profile with a mismatched UID.
+     * @deny (list) Listing user documents is not permitted.
+     * @principle Enforces document ownership for user profiles.
+     */
+    match /users/{userId} {
+      //Function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the user is the owner of the account.
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Function to check if the user is the existing owner of the account
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Allow the user to create their own document if the userId matches the authenticated user's uid.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+
+      // Allow the user to get their own document if the userId matches the authenticated user's uid.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow the user to update their own document if the userId matches the authenticated user's uid and the document exists.
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow the user to delete their own document if the userId matches the authenticated user's uid and the document exists.
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+
+      // Listing is disallowed.
+      allow list: if false;
+    }
+
+    /**
+     * @description Controls access to design documents.
+     * @path /designs/{designId}
+     * @allow (get, list) Public read access to all designs.
+     * @allow (create) Authenticated user creates a design with their UID as the designerId.
+     * @allow (update, delete) Designer can modify or delete their own designs.
+     * @deny (create) Authenticated user attempts to create a design with a mismatched designerId.
+     * @deny (update, delete) Non-designer attempts to modify or delete a design.
+     * @principle Enforces document ownership for writes, public read access.
+     */
+    match /designs/{designId} {
+      //Function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the user is the owner of the design.
+      function isOwner(designerId) {
+        return isSignedIn() && request.auth.uid == designerId;
+      }
+
+      // Function to check if the user is the existing owner of the account
+      function isExistingOwner(designerId) {
+        return isOwner(designerId) && resource != null;
+      }
+
+      // Public read access to designs.
+      allow get, list: if true;
+
+      // Allow an authenticated user to create a new design if the designerId matches their UID.
+      allow create: if isSignedIn() && request.resource.data.designerId == request.auth.uid;
+
+      // Only the owner can update the design and the document exists.
+      allow update: if isExistingOwner(resource.data.designerId);
+
+      // Only the owner can delete the design and the document exists.
+      allow delete: if isExistingOwner(resource.data.designerId);
+    }
+
+    /**
+     * @description Controls access to comments on designs.
+     * @path /designs/{designId}/comments/{commentId}
+     * @allow (create) Authenticated user creates a comment.
+     * @allow (get, list) Public read access to all comments for a design.
+     * @allow (update, delete) Author can modify or delete their own comments.
+     * @deny (update, delete) Non-author attempts to modify or delete a comment.
+     * @principle Enforces document ownership for writes on comments.
+     */
+    match /designs/{designId}/comments/{commentId} {
+      //Function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the user is the owner of the comment.
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Function to check if the user is the existing owner of the account
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Public read access to comments.
+      allow get, list: if true;
+
+      // Allow an authenticated user to create a new comment.
+      allow create: if isSignedIn();
+
+      // Only the owner can update the comment and the document exists.
+      allow update: if isExistingOwner(resource.data.userId);
+
+      // Only the owner can delete the comment and the document exists.
+      allow delete: if isExistingOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Controls access to likes on designs.
+     * @path /designs/{designId}/likes/{likeId}
+     * @allow (create) Authenticated user creates a like.
+     * @allow (get, list) Public read access to all likes for a design.
+     * @allow (delete) User can delete their own like.
+     * @deny (delete) Non-owner attempts to delete a like.
+     * @principle Enforces document ownership for writes on likes.
+     */
+    match /designs/{designId}/likes/{likeId} {
+      //Function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the user is the owner of the like.
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Function to check if the user is the existing owner of the account
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Public read access to likes.
+      allow get, list: if true;
+
+      // Allow an authenticated user to create a new like.
+      allow create: if isSignedIn();
+
+      // Deleting a like is only allowed by the owner and the document exists.
+      allow delete: if isExistingOwner(resource.data.userId);
+
+      // Updates are disallowed on likes.
+      allow update: if false;
+    }
+
+    /**
+     * @description Controls access to purchase records.
+     * @path /purchases/{purchaseId}
+     * @allow (create) Authenticated user creates a purchase record with their UID as the buyerId.
+     * @allow (get) Authenticated user can get their own purchases.
+     * @deny (get) Non-owner attempts to get a purchase.
+     * @deny (list) Listing all purchase records is disallowed.
+     * @principle Enforces document ownership for purchases.
+     */
+    match /purchases/{purchaseId} {
+      //Function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the user is the owner of the purchase.
+      function isOwner(buyerId) {
+        return isSignedIn() && request.auth.uid == buyerId;
+      }
+
+      // Function to check if the user is the existing owner of the account
+      function isExistingOwner(buyerId) {
+        return isOwner(buyerId) && resource != null;
+      }
+
+      // Allow an authenticated user to create a new purchase if the buyerId matches their UID.
+      allow create: if isSignedIn() && request.resource.data.buyerId == request.auth.uid;
+
+      // Allow the user to get their own purchase if the buyerId matches the authenticated user's uid.
+      allow get: if isOwner(resource.data.buyerId);
+
+      // Only the owner can update the purchase.
+      allow update: if isExistingOwner(resource.data.buyerId);
+
+      // Only the owner can delete the purchase.
+      allow delete: if isExistingOwner(resource.data.buyerId);
+
+      // Listing is disallowed.
+      allow list: if false;
+    }
+
+    /**
+     * @description Controls access to admin role documents.
+     * @path /roles_admin/{userId}
+     * @allow (create) Anyone can create.
+     * @allow (get) Anyone can get.
+     * @allow (list) Anyone can list.
+     * @allow (update) Anyone can update.
+     * @allow (delete) Anyone can delete.
+     * @principle open admin role permissions.
+     */
+    match /roles_admin/{userId} {
+        allow get, list, create, update, delete: if true;
+    }
+  }
+}

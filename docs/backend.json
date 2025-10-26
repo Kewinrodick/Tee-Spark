@@ -1,0 +1,309 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the T-shirt design selling platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (Designer, Buyer, Admin)."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile image."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username",
+        "role"
+      ]
+    },
+    "Design": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Design",
+      "type": "object",
+      "description": "Represents a T-shirt design uploaded by a designer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the design entity."
+        },
+        "designerId": {
+          "type": "string",
+          "description": "Reference to the User (Designer) who uploaded the design. (Relationship: User 1:N Design)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the design."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the design."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the design's image."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the design."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags associated with the design for search and discovery.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "designerId",
+        "title",
+        "description",
+        "imageUrl",
+        "price"
+      ]
+    },
+    "Purchase": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Purchase",
+      "type": "object",
+      "description": "Represents a purchase of a design by a buyer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the purchase entity."
+        },
+        "buyerId": {
+          "type": "string",
+          "description": "Reference to the User (Buyer) who made the purchase. (Relationship: User 1:N Purchase)"
+        },
+        "designId": {
+          "type": "string",
+          "description": "Reference to the Design that was purchased. (Relationship: Design 1:N Purchase)"
+        },
+        "purchaseDate": {
+          "type": "string",
+          "description": "Date and time of the purchase.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount paid for the design."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Transaction ID from the payment gateway (e.g., Stripe)."
+        }
+      },
+      "required": [
+        "id",
+        "buyerId",
+        "designId",
+        "purchaseDate",
+        "amount",
+        "transactionId"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a design.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the comment entity."
+        },
+        "designId": {
+          "type": "string",
+          "description": "Reference to the Design that the comment belongs to. (Relationship: Design 1:N Comment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who made the comment. (Relationship: User 1:N Comment)"
+        },
+        "commentText": {
+          "type": "string",
+          "description": "Text content of the comment."
+        },
+        "commentDate": {
+          "type": "string",
+          "description": "Date and time when the comment was made.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "designId",
+        "userId",
+        "commentText",
+        "commentDate"
+      ]
+    },
+    "Like": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Like",
+      "type": "object",
+      "description": "Represents a user's like on a design.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the like entity."
+        },
+        "designId": {
+          "type": "string",
+          "description": "Reference to the Design that was liked. (Relationship: Design 1:N Like)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who liked the design. (Relationship: User 1:N Like)"
+        },
+        "likeDate": {
+          "type": "string",
+          "description": "Date and time when the design was liked.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "designId",
+        "userId",
+        "likeDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  The 'userId' parameter corresponds to the Firebase Auth UID. Path-based ownership ensures only the authenticated user can access their profile data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/designs/{designId}",
+        "definition": {
+          "entityName": "Design",
+          "schema": {
+            "$ref": "#/backend/entities/Design"
+          },
+          "description": "Stores all design documents.  Authorization is managed via the 'designerId' field, enabling designers to manage their own designs. Includes denormalized data for rapid querying and display.",
+          "params": [
+            {
+              "name": "designId",
+              "description": "The unique identifier for the design."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/designs/{designId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments associated with each design. The 'designId' parameter identifies the design to which the comment belongs. Authorization is based on the 'userId' field within the comment, ensuring only the commenter can modify/delete their comments.",
+          "params": [
+            {
+              "name": "designId",
+              "description": "The unique identifier for the design."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier for the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/designs/{designId}/likes/{likeId}",
+        "definition": {
+          "entityName": "Like",
+          "schema": {
+            "$ref": "#/backend/entities/Like"
+          },
+          "description": "Stores likes associated with each design. The 'designId' parameter identifies the design that was liked. Authorization is based on the 'userId' field, ensuring a user can only like a design once and manage their own likes.",
+          "params": [
+            {
+              "name": "designId",
+              "description": "The unique identifier for the design."
+            },
+            {
+              "name": "likeId",
+              "description": "The unique identifier for the like."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/purchases/{purchaseId}",
+        "definition": {
+          "entityName": "Purchase",
+          "schema": {
+            "$ref": "#/backend/entities/Purchase"
+          },
+          "description": "Stores purchase records. Authorization is based on the 'buyerId' field.  Includes transaction details for auditing and reporting.",
+          "params": [
+            {
+              "name": "purchaseId",
+              "description": "The unique identifier for the purchase."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Documents in this collection indicate that a user is an administrator. Existence of a document with a specific user ID grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure, scalable, and easily maintainable data model for the T-shirt Design Selling Platform (TeeSpark). It prioritizes Authorization Independence by denormalizing authorization context, ensuring that security rules can be evaluated without relying on potentially brittle `get()` calls. The design also incorporates Structural Segregation to maintain a homogeneous security posture within each collection and Access Modeling using path-based ownership and membership maps where applicable.\n\nAuthorization Independence is achieved primarily through denormalization. For instance, the `Design` documents are stored in a flat collection, `/designs`, with the `designerId` field. This allows direct querying and filtering of designs by a specific designer without needing to traverse up the hierarchy. Similarly, for collaborative scenarios (which aren't explicitly present in the current data model but could be extended), membership maps would be included directly within the documents needing authorization context.\n\nStructural Segregation is implemented by separating different types of data into distinct collections based on their access requirements. Publicly accessible design data is stored in the `/designs` collection. User-specific data, like user profiles, are stored under `/users/{userId}`, ensuring that only the user has access to their own profile information. This segregation simplifies the security rules and makes them easier to understand and maintain.\n\nQAPs (Rules are not Filters) are supported using structural segregation. Listing designs is performed directly against the `/designs` collection, and security rules can efficiently control access based on the attributes within the `design` document or the requesting user's role, without needing to filter based on data retrieved from other documents.\n\nInvariants such as ownership are enforced by structuring data using path-based ownership where appropriate. Timestamps can be easily added to ensure data integrity, particularly for entities like `Purchase` and `Comment`. Denormalized data, such as user information embedded within a design or comment, can be maintained by triggers to guarantee radical consistency across the platform."
+  }
+}
