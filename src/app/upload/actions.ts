@@ -8,7 +8,6 @@ import { collection, addDoc, getFirestore } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
-import { getAuth } from 'firebase/auth';
 
 const uploadSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -16,7 +15,6 @@ const uploadSchema = z.object({
   price: z.coerce.number().min(1, "Price must be at least $1."),
   tags: z.array(z.string()).min(1, "Please add at least one tag."),
   image: z.any().refine(file => file?.size > 0, "Design file is required."),
-  userId: z.string()
 });
 
 // Helper to initialize Firebase on the server
@@ -27,12 +25,8 @@ function initializeServerFirebase() {
   return getApp();
 }
 
-export async function uploadDesign(formData: FormData) {
+export async function uploadDesign(formData: FormData, userId: string) {
   'use server';
-  
-  const firebaseApp = initializeServerFirebase();
-  const auth = getAuth(firebaseApp);
-  const userId = auth.currentUser?.uid;
 
   if (!userId) {
      return {
@@ -48,7 +42,6 @@ export async function uploadDesign(formData: FormData) {
     price: formData.get('price'),
     tags: formData.getAll('tags[]'),
     image: formData.get('image'),
-    userId: userId,
   };
 
   const validatedFields = uploadSchema.safeParse(rawData);
@@ -62,6 +55,7 @@ export async function uploadDesign(formData: FormData) {
   const { title, description, price, tags, image } = validatedFields.data;
 
   try {
+    const firebaseApp = initializeServerFirebase();
     const storage = getStorage(firebaseApp);
     const firestore = getFirestore(firebaseApp);
     

@@ -138,7 +138,7 @@ export function UploadForm() {
     formData.append('image', values.image);
 
     startTransition(async () => {
-      const result = await uploadDesign(formData);
+      const result = await uploadDesign(formData, user.uid);
 
       if (result?.success) {
         toast({
