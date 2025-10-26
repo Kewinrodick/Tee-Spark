@@ -14,7 +14,7 @@ interface DesignCardProps {
 
 export function DesignCard({ design, className }: DesignCardProps) {
   return (
-      <Card className={cn("overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-primary/50 group border-transparent", className)}>
+      <Card className={cn("overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-primary/50 group border", className)}>
         <Link href={`/designs/${design.id}`} className="block flex flex-col flex-grow">
           <CardHeader className="p-0">
             <div className="aspect-[3/4] overflow-hidden">

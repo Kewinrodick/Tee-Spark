@@ -66,7 +66,6 @@ export default async function DesignPage({ params }: { params: { id: string } })
           <Separator />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="text-4xl font-bold text-primary">${design.price}</div>
             <PurchaseButton design={design} className="sm:w-auto text-lg py-6 px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow" />
           </div>
         </div>

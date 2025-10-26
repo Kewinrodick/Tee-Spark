@@ -61,7 +61,7 @@ export function PurchaseButton({ design, className, ...props }: { design: Design
       {...props}
     >
       <ShoppingCart className="mr-2 h-5 w-5" />
-      {isPurchasing ? 'Processing...' : 'Purchase License'}
+      {isPurchasing ? 'Processing...' : `Purchase - $${design.price}`}
     </Button>
   );
 }
