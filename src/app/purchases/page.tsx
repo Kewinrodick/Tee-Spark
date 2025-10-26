@@ -1,12 +1,28 @@
+'use client';
 
 import { DesignCard } from '@/components/design-card';
-import { getDesigns } from '@/lib/mock-data';
+import { getDesigns, type Design } from '@/lib/mock-data';
 import { ShoppingBag } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export default async function MyPurchasesPage() {
-  // In a real app, you would fetch designs for the currently logged-in user.
-  const allDesigns = await getDesigns();
-  const userPurchases: any[] = []; // Mock: no purchases yet
+export default function MyPurchasesPage() {
+  const [userPurchases, setUserPurchases] = useState<Design[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      setIsLoading(true);
+      // In a real app, you'd fetch this from a secure backend.
+      // For this prototype, we use localStorage.
+      const purchasedIds = JSON.parse(localStorage.getItem('userPurchases') || '[]');
+      const allDesigns = await getDesigns();
+      const purchasedDesigns = allDesigns.filter(design => purchasedIds.includes(design.id));
+      setUserPurchases(purchasedDesigns);
+      setIsLoading(false);
+    };
+
+    fetchPurchases();
+  }, []);
 
   return (
     <div className="container py-8 md:py-12">
@@ -16,7 +32,9 @@ export default async function MyPurchasesPage() {
           Designs you've purchased. Thank you for supporting the creators!
         </p>
       </div>
-      {userPurchases.length > 0 ? (
+      {isLoading ? (
+        <p>Loading your purchases...</p>
+      ) : userPurchases.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {userPurchases.map((design) => (
             <DesignCard key={design.id} design={design} />

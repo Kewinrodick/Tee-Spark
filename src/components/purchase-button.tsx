@@ -36,6 +36,12 @@ export function PurchaseButton({ design, className, children, ...props }: { desi
       // Generate and email proof
       await generateAndEmailProof(design, user, transactionId);
 
+      // Save purchase to localStorage
+      const existingPurchases = JSON.parse(localStorage.getItem('userPurchases') || '[]');
+      if (!existingPurchases.includes(design.id)) {
+        localStorage.setItem('userPurchases', JSON.stringify([...existingPurchases, design.id]));
+      }
+
       toast({
         title: 'Purchase Successful!',
         description: `Proof of purchase for "${design.title}" has been sent to your email.`,
