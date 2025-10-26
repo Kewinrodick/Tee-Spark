@@ -72,7 +72,8 @@ export function SignupForm() {
       const user = userCredential.user;
 
       const userRef = doc(firestore, "users", user.uid);
-      await setDoc(userRef, {
+      // Use non-blocking write and handle potential errors via the global error handler
+      setDocumentNonBlocking(userRef, {
         id: user.uid,
         email: values.email,
         username: values.username,
