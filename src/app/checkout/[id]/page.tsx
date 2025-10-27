@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CheckoutPage({ params }: { params: { id: string } }) {
     const [design, setDesign] = useState<Design | null | undefined>(undefined);
+    const { id } = params;
 
     useEffect(() => {
         async function fetchDesign() {
@@ -23,13 +24,15 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
             const allDesigns = [...mockDesigns, ...storedDesigns];
             
-            const foundDesign = allDesigns.find((d: Design) => d.id === params.id);
+            const foundDesign = allDesigns.find((d: Design) => d.id === id);
             
             setDesign(foundDesign);
         }
 
-        fetchDesign();
-    }, []);
+        if (id) {
+            fetchDesign();
+        }
+    }, [id]);
 
 
   if (design === undefined) {
