@@ -5,27 +5,17 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Design } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
-import { useState, type ComponentProps, useEffect } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-
-type User = {
-  name: string;
-  email: string;
-}
+import { useAuth } from '@/context/auth-context';
 
 export function PurchaseButton({ design, className, children, ...props }: { design: Design, children: React.ReactNode } & ComponentProps<'button'>) {
   const router = useRouter();
   const { toast } = useToast();
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
 
   const handlePurchase = async () => {
     if (!user) {

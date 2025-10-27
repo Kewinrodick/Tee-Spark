@@ -9,53 +9,48 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type User = {
-  name: string;
-  email: string;
-  role: string;
-};
+import { useAuth } from "@/context/auth-context";
 
 export default function ProfilePage() {
     const { toast } = useToast();
-    const [user, setUser] = useState<User | null>(null);
+    const { user, isLoading, updateUser } = useAuth();
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setName(parsedUser.name || '');
+        if (user) {
+            setName(user.username || '');
         }
-        setIsLoading(false);
-    }, []);
+    }, [user]);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!user) return;
         setIsSaving(true);
         
-        const updatedUser = { ...user, name };
-        
-        // Simulate API call
-        setTimeout(() => {
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            setUser(updatedUser);
-            
-            // Dispatch a storage event to notify other components like the header
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'user',
-                newValue: JSON.stringify(updatedUser)
-            }));
-            
-            setIsSaving(false);
-            toast({
-                title: "Profile Updated",
-                description: "Your changes have been saved successfully.",
+        try {
+          // In a real app, you'd call an API to update the user profile
+          // await fetch('/api/users/me', { method: 'PUT', body: JSON.stringify({ username: name }) });
+          
+          // For now, we simulate the update and update the context
+          const updatedUserData = { ...user, username: name };
+          
+          // This is a mock update. In a real app, the backend would handle this
+          // and the AuthContext would refetch the user.
+          await updateUser(updatedUserData);
+
+          toast({
+              title: "Profile Updated",
+              description: "Your changes have been saved successfully.",
+          });
+        } catch (error) {
+           toast({
+              variant: "destructive",
+              title: "Update Failed",
+              description: "Could not save your changes.",
             });
-        }, 1000);
+        } finally {
+          setIsSaving(false);
+        }
     };
 
     if (isLoading) {

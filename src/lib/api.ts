@@ -1,6 +1,7 @@
+
 import type { Design } from './mock-data';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:5000/api';
 
 export async function getDesigns(): Promise<Design[]> {
   try {

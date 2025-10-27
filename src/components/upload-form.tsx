@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
+import { useAuth } from '@/context/auth-context';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -55,7 +56,7 @@ export function UploadForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
-  const [user, setUser] = useState<{email: string} | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -65,10 +66,6 @@ export function UploadForm() {
 
   useEffect(() => {
     setHasMounted(true);
-    const storedUser = localStorage.getItem('user');
-    if(storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
   }, []);
 
   const form = useForm<UploadFormValues>({
@@ -162,10 +159,11 @@ export function UploadForm() {
               title: 'Authentication Error',
               description: 'You must be logged in to upload a design.',
             });
+            router.push('/login');
             return;
         }
 
-      const result = await uploadDesign(values, user.email);
+      const result = await uploadDesign(values, user.email, user.username);
 
       if (result?.success && result.design) {
         const existingDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
@@ -195,7 +193,7 @@ export function UploadForm() {
     });
   }
 
-  if (!hasMounted) {
+  if (!hasMounted || isAuthLoading) {
     return (
         <Card>
             <CardContent className="p-6">

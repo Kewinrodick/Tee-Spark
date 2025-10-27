@@ -7,10 +7,12 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Paintbrush } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 
 export default function MyDesignsPage() {
   const [userDesigns, setUserDesigns] = useState<Design[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsLoading(true);
@@ -19,12 +21,17 @@ export default function MyDesignsPage() {
     const allMockDesigns = JSON.parse(localStorage.getItem('allDesigns') || '[]');
 
     // In a real app, you would fetch designs for the currently logged-in user from your API
-    const userEmail = JSON.parse(localStorage.getItem('user') || '{}')?.email;
+    const userEmail = user?.email;
     const mockUserDesigns = allMockDesigns.filter((d: Design) => d.designer.id === userEmail).slice(0,4);
     
-    setUserDesigns([...mockUserDesigns, ...storedDesigns]);
+    if (user) {
+        setUserDesigns([...mockUserDesigns, ...storedDesigns.filter((d:Design) => d.designer.id === user.email)]);
+    } else {
+        setUserDesigns([]);
+    }
+    
     setIsLoading(false);
-  }, []);
+  }, [user]);
 
   return (
     <div className="container py-8 md:py-12">
@@ -46,10 +53,12 @@ export default function MyDesignsPage() {
         <div className="text-center py-16 border-2 border-dashed border-muted rounded-lg flex flex-col items-center justify-center">
             <Paintbrush className="h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold">No designs yet!</h2>
-          <p className="text-muted-foreground mt-2">Looks like you haven't uploaded any designs. Start creating!</p>
-          <Button asChild className="mt-6">
-            <Link href="/upload">Upload Your First Design</Link>
-          </Button>
+          <p className="text-muted-foreground mt-2">{user ? "Looks like you haven't uploaded any designs. Start creating!" : "Log in to see your designs."}</p>
+          {user && (
+            <Button asChild className="mt-6">
+              <Link href="/upload">Upload Your First Design</Link>
+            </Button>
+          )}
         </div>
       )}
     </div>

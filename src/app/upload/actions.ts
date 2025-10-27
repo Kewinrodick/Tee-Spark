@@ -18,7 +18,7 @@ const uploadSchema = z.object({
 // This function will now be responsible for adding the new design to a client-side store (localStorage)
 // This is a client-side action despite the 'use server' directive, as it is called from a client component and interacts with localStorage.
 // The actual storage happens in the component that calls this.
-export async function uploadDesign(values: z.infer<typeof uploadSchema>, userEmail: string) {
+export async function uploadDesign(values: z.infer<typeof uploadSchema>, userEmail: string, userName: string) {
   'use server';
 
   if (!userEmail) {
@@ -51,7 +51,7 @@ export async function uploadDesign(values: z.infer<typeof uploadSchema>, userEma
         price: validatedFields.data.price,
         designer: {
             id: userEmail,
-            name: userEmail.split('@')[0], // Mock designer name from email
+            name: userName, // Use the actual username
             avatarUrl: `https://i.pravatar.cc/150?u=${userEmail}`,
         },
         likes: 0,

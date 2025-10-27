@@ -33,30 +33,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
 
 const signupSchema = z.object({
   username: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  role: z.enum(["designer", "buyer"], {
+  role: z.enum(["Designer", "Buyer"], {
     required_error: "Please select a role.",
   }),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
-// Mock signup
-const mockSignup = async (values: SignupFormValues) => {
-    // In a real app, this would be a fetch call to your backend API
-    // to create a user in MongoDB.
-    console.log("Signing up user:", values);
-    localStorage.setItem('user', JSON.stringify({ email: values.email, name: values.username }));
-    return { success: true };
-};
 
 export function SignupForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { signup, isLoading } = useAuth();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -68,19 +62,19 @@ export function SignupForm() {
   });
 
   const onSubmit = async (values: SignupFormValues) => {
-    const result = await mockSignup(values);
-    if (result.success) {
-      toast({
-        title: "Account Created!",
-        description: "You've successfully signed up.",
-      });
-      router.push("/");
-    } else {
+    try {
+        await signup(values);
+        toast({
+            title: "Account Created!",
+            description: "You've successfully signed up.",
+        });
+        router.push("/");
+    } catch (error: any) {
         toast({
             variant: "destructive",
             title: "Signup Failed",
-            description: "An unexpected error occurred. Please try again.",
-          });
+            description: error.message || "An unexpected error occurred. Please try again.",
+        });
     }
   };
 
@@ -156,8 +150,8 @@ export function SignupForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="designer">Designer</SelectItem>
-                      <SelectItem value="buyer">Buyer / Printing Company</SelectItem>
+                      <SelectItem value="Designer">Designer</SelectItem>
+                      <SelectItem value="Buyer">Buyer / Printing Company</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -166,8 +160,8 @@ export function SignupForm() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}

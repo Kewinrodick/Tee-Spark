@@ -15,11 +15,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: Design | undefined, id: string }) {
   const [design, setDesign] = useState<Design | null | undefined>(initialDesign);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const { user } = useAuth();
 
   const { toast } = useToast();
   const router = useRouter();
@@ -41,11 +42,7 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
       fetchDesign();
     }
     
-    // Check for user and favorite status
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // Check for favorite status in localStorage
     const favorites = JSON.parse(localStorage.getItem('userFavorites') || '[]');
     setIsFavorite(favorites.includes(id));
 
