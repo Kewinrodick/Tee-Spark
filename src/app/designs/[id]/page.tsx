@@ -1,4 +1,7 @@
-import { getDesignById } from "@/lib/api";
+
+'use client';
+
+import { getDesignById, type Design } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,9 +10,52 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, ShoppingCart } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function DesignPage({ params }: { params: { id: string } }) {
-  const design = await getDesignById(params.id);
+export default function DesignPage({ params }: { params: { id: string } }) {
+  const [design, setDesign] = useState<Design | null | undefined>(undefined);
+
+  useEffect(() => {
+    async function fetchDesign() {
+      // First, try to find the design in localStorage (for user-uploaded designs)
+      const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
+      const allMockDesigns = JSON.parse(localStorage.getItem('allDesigns') || '[]');
+      const allDesigns = [...allMockDesigns, ...storedDesigns];
+      let foundDesign = allDesigns.find((d: Design) => d.id === params.id);
+
+      // If not found in localStorage, fetch from mock data API
+      if (!foundDesign) {
+        foundDesign = await getDesignById(params.id);
+      }
+      
+      setDesign(foundDesign);
+    }
+
+    fetchDesign();
+  }, [params.id]);
+
+  if (design === undefined) {
+    // Loading state
+    return (
+        <div className="container py-8 md:py-12">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+                <Skeleton className="aspect-[3/4] w-full rounded-lg"/>
+                <div className="flex flex-col gap-6">
+                    <Skeleton className="h-10 w-3/4" />
+                    <Skeleton className="h-6 w-1/4" />
+                    <Skeleton className="h-20 w-full" />
+                    <div className="flex flex-wrap gap-2">
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-6 w-24" />
+                        <Skeleton className="h-6 w-16" />
+                    </div>
+                    <Skeleton className="h-8 w-full" />
+                </div>
+            </div>
+        </div>
+    )
+  }
 
   if (!design) {
     notFound();

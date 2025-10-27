@@ -1,5 +1,7 @@
 
-import { getDesignById } from "@/lib/mock-data";
+'use client';
+
+import { getDesignById, type Design } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -10,9 +12,45 @@ import { Separator } from "@/components/ui/separator";
 import { CreditCard, Lock } from "lucide-react";
 import Link from "next/link";
 import { PurchaseButton } from "@/components/purchase-button";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function CheckoutPage({ params }: { params: { id: string } }) {
-  const design = await getDesignById(params.id);
+export default function CheckoutPage({ params }: { params: { id: string } }) {
+    const [design, setDesign] = useState<Design | null | undefined>(undefined);
+
+    useEffect(() => {
+        async function fetchDesign() {
+            // First, try to find the design in localStorage (for user-uploaded designs)
+            const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
+            const allMockDesigns = JSON.parse(localStorage.getItem('allDesigns') || '[]');
+            const allDesigns = [...allMockDesigns, ...storedDesigns];
+            let foundDesign = allDesigns.find((d: Design) => d.id === params.id);
+
+            // If not found in localStorage, fetch from mock data API
+            if (!foundDesign) {
+                foundDesign = await getDesignById(params.id);
+            }
+            
+            setDesign(foundDesign);
+        }
+
+        fetchDesign();
+    }, [params.id]);
+
+
+  if (design === undefined) {
+    return (
+        <div className="container py-8 md:py-12">
+            <div className="mx-auto max-w-4xl">
+                 <Skeleton className="h-12 w-1/2 mx-auto mb-8" />
+                <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+                    <Skeleton className="h-96 w-full"/>
+                    <Skeleton className="h-96 w-full"/>
+                </div>
+            </div>
+        </div>
+    )
+  }
 
   if (!design) {
     notFound();
