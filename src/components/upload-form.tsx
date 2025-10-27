@@ -30,6 +30,7 @@ import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Skeleton } from './ui/skeleton';
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -56,12 +57,14 @@ export function UploadForm() {
   const [isSubmitting, startTransition] = useTransition();
   const [user, setUser] = useState<{email: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hasMounted, setHasMounted] = useState(false);
 
 
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
+    setHasMounted(true);
     const storedUser = localStorage.getItem('user');
     if(storedUser) {
       setUser(JSON.parse(storedUser));
@@ -185,6 +188,23 @@ export function UploadForm() {
         });
       }
     });
+  }
+
+  if (!hasMounted) {
+    return (
+        <Card>
+            <CardContent className="p-6">
+                <div className="space-y-8">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    );
   }
 
   return (
@@ -363,3 +383,5 @@ export function UploadForm() {
     </Card>
   );
 }
+
+    
