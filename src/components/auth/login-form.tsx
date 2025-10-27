@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,6 @@ export function LoginForm() {
         description: "Welcome back!",
       });
       router.push("/");
-      router.refresh(); // Refresh to update header state
     } else {
       toast({
         variant: "destructive",

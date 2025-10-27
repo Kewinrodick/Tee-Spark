@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,6 @@ export function SignupForm() {
         description: "You've successfully signed up.",
       });
       router.push("/");
-      router.refresh();
     } else {
         toast({
             variant: "destructive",

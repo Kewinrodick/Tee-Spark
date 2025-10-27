@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 type User = {
   name: string;
@@ -26,25 +27,45 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
+  const updateUser = () => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
       localStorage.removeItem('user');
+      setUser(null);
     }
     setIsUserLoading(false);
-  }, []);
+  };
+  
+  useEffect(() => {
+    updateUser();
+
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'user') {
+            updateUser();
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [pathname]);
 
   const handleSignOut = () => {
     localStorage.removeItem('user');
     setUser(null);
     router.push('/');
-    router.refresh();
+    // No need for router.refresh() as the state change will re-render
   };
 
   return (
@@ -58,7 +79,7 @@ export function Header() {
              <Link href="/" className="transition-colors hover:text-primary text-foreground/80">
               Home
             </Link>
-            <Link href="/" className="transition-colors hover:text-primary text-foreground/80">
+            <Link href="/#trending-designs" className="transition-colors hover:text-primary text-foreground/80">
               Trending
             </Link>
             {user && (
