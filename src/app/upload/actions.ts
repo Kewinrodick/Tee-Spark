@@ -77,10 +77,8 @@ export async function uploadDesign(values: z.infer<typeof uploadSchema>, userEma
 
 export async function getTagSuggestions(input: SuggestTagsInput) {
   try {
-    // Mock the AI call to prevent network errors
-    const mockTags = ['cartoon', 'retro', 'hero', 'vintage', 'graphic'];
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    return { tags: mockTags };
+    const result = await suggestTagsAI(input);
+    return result;
   } catch (error) {
     console.error('AI Tag Suggestion Error:', error);
     return { error: 'Failed to get AI suggestions due to a server error.' };
