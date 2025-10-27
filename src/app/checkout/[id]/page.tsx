@@ -1,7 +1,7 @@
 
 'use client';
 
-import { getDesignById, type Design } from "@/lib/mock-data";
+import { getDesigns, type Design } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -20,16 +20,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         async function fetchDesign() {
-            // First, try to find the design in localStorage (for user-uploaded designs)
+            const allMockDesigns = await getDesigns();
             const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
-            const allMockDesigns = JSON.parse(localStorage.getItem('allDesigns') || '[]');
             const allDesigns = [...allMockDesigns, ...storedDesigns];
+            
             let foundDesign = allDesigns.find((d: Design) => d.id === params.id);
-
-            // If not found in localStorage, fetch from mock data API
-            if (!foundDesign) {
-                foundDesign = await getDesignById(params.id);
-            }
             
             setDesign(foundDesign);
         }
