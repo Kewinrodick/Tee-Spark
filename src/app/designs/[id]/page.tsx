@@ -15,10 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DesignPage({ params }: { params: { id: string } }) {
   const [design, setDesign] = useState<Design | null | undefined>(undefined);
-  const { id } = params;
 
   useEffect(() => {
     async function fetchDesign() {
+      const { id } = params;
       const mockDesigns = await getDesigns();
       const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
       const allDesigns = [...mockDesigns, ...storedDesigns];
@@ -28,10 +28,8 @@ export default function DesignPage({ params }: { params: { id: string } }) {
       setDesign(foundDesign);
     }
 
-    if (id) {
-      fetchDesign();
-    }
-  }, [id]);
+    fetchDesign();
+  }, [params]);
 
   if (design === undefined) {
     // Loading state
