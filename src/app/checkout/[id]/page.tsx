@@ -29,7 +29,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         }
 
         fetchDesign();
-    }, [params.id]);
+    }, []);
 
 
   if (design === undefined) {

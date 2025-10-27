@@ -28,7 +28,7 @@ export default function DesignPage({ params }: { params: { id: string } }) {
     }
 
     fetchDesign();
-  }, [params.id]);
+  }, []);
 
   if (design === undefined) {
     // Loading state
