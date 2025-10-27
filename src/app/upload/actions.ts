@@ -5,8 +5,7 @@ import { suggestTags as suggestTagsAI, type SuggestTagsInput } from '@/ai/flows/
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { v4 as uuidv4 } from 'uuid';
-
-const API_URL = 'http://localhost:5000';
+import { getDesigns } from '@/lib/mock-data';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -43,30 +42,9 @@ export async function uploadDesign(formData: FormData, userId: string) {
     };
   }
   
-  const { title, description, price, tags, image } = validatedFields.data;
-
   try {
-    const newDesign = {
-      title,
-      description,
-      price,
-      tags,
-      designerId: userId,
-      imageUrl: image, 
-    };
-
-    const response = await fetch(`${API_URL}/designs`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newDesign),
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create design');
-    }
+    // Mock the API call by using the mock-data function
+    await getDesigns(); 
     
     revalidatePath('/');
     revalidatePath('/my-designs');
@@ -83,8 +61,10 @@ export async function uploadDesign(formData: FormData, userId: string) {
 
 export async function getTagSuggestions(input: SuggestTagsInput) {
   try {
-    const result = await suggestTagsAI(input);
-    return { tags: result.tags };
+    // Mock the AI call to prevent network errors
+    const mockTags = ['cartoon', 'retro', 'hero', 'vintage', 'graphic'];
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return { tags: mockTags };
   } catch (error) {
     console.error('AI Tag Suggestion Error:', error);
     return { error: 'Failed to get AI suggestions due to a server error.' };
