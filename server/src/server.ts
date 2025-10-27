@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,7 +14,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: 'http://localhost:9002',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,
 }));
 app.use(cookieParser());
@@ -33,15 +32,12 @@ if (uri) {
     console.error("MONGO_URI is not defined in the environment variables.")
 }
 
+// API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/designs', designsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/purchases', purchasesRouter);
-app.use('/api/auth', authRouter);
-
-app.get('/', (req, res) => {
-  res.send('Server is running!');
-});
 
 app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
+    console.log(`Server is running on port: ${port}`);
 });

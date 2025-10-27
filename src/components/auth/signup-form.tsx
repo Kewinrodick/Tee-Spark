@@ -66,7 +66,7 @@ export function SignupForm() {
         await signup(values);
         toast({
             title: "Account Created!",
-            description: "You've successfully signed up.",
+            description: "You've successfully signed up and are now logged in.",
         });
         router.push("/");
     } catch (error: any) {
@@ -151,7 +151,7 @@ export function SignupForm() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Designer">Designer</SelectItem>
-                      <SelectItem value="Buyer">Buyer / Printing Company</SelectItem>
+                      <SelectItem value="Buyer">Buyer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
