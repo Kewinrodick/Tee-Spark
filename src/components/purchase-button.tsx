@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,11 @@ export function PurchaseButton({ design, className, children, ...props }: { desi
 
   const handlePurchase = async () => {
     if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to purchase a design.",
+      });
       router.push('/login');
       return;
     }
