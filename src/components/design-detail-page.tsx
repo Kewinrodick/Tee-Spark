@@ -1,7 +1,7 @@
 
 'use client';
 
-import { getDesigns, type Design } from "@/lib/mock-data";
+import { type Design } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,9 +12,17 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: Design | undefined, id: string }) {
   const [design, setDesign] = useState<Design | null | undefined>(initialDesign);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [user, setUser] = useState<{ email: string } | null>(null);
+
+  const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchDesign() {
@@ -26,18 +34,49 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
             setDesign(foundDesign);
         } else if(initialDesign) {
             setDesign(initialDesign);
-        } else {
-             const mockDesigns = await getDesigns();
-             foundDesign = mockDesigns.find((d: Design) => d.id === id);
-             setDesign(foundDesign || null);
         }
     }
 
-    // if the server didn't provide the design, try to find it on the client
-    if(design === undefined) {
+    if (design === undefined) {
       fetchDesign();
     }
+    
+    // Check for user and favorite status
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    const favorites = JSON.parse(localStorage.getItem('userFavorites') || '[]');
+    setIsFavorite(favorites.includes(id));
+
   }, [id, initialDesign, design]);
+
+  const handleFavoriteToggle = () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Please log in",
+        description: "You need to be logged in to favorite a design.",
+      });
+      router.push('/login');
+      return;
+    }
+    
+    const favorites = JSON.parse(localStorage.getItem('userFavorites') || '[]');
+    let newFavorites;
+
+    if (isFavorite) {
+      newFavorites = favorites.filter((favId: string) => favId !== id);
+      toast({ title: "Removed from favorites." });
+    } else {
+      newFavorites = [...favorites, id];
+      toast({ title: "Added to favorites!" });
+    }
+
+    localStorage.setItem('userFavorites', JSON.stringify(newFavorites));
+    setIsFavorite(!isFavorite);
+  };
+
 
   if (design === undefined) {
     // Loading state
@@ -103,10 +142,10 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
           </div>
           
           <div className="flex items-center gap-6 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5" />
+             <Button variant="ghost" className="flex items-center gap-2 px-2" onClick={handleFavoriteToggle}>
+              <Heart className={cn("h-5 w-5", isFavorite && "fill-current text-primary")} />
               <span className="font-medium">{design.likes.toLocaleString()} likes</span>
-            </div>
+            </Button>
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-medium">{design.commentsCount.toLocaleString()} comments</span>

@@ -1,12 +1,36 @@
 
-import { DesignCard } from '@/components/design-card';
-import { getDesigns } from '@/lib/mock-data';
-import { Heart } from 'lucide-react';
+'use client';
 
-export default async function FavoritesPage() {
-  // In a real app, you would fetch designs for the currently logged-in user.
-  const allDesigns = await getDesigns();
-  const userFavorites: any[] = []; // Mock: no favorites yet
+import { DesignCard } from '@/components/design-card';
+import { getDesigns, type Design } from '@/lib/mock-data';
+import { Heart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+export default function FavoritesPage() {
+  const [userFavorites, setUserFavorites] = useState<Design[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      setIsLoading(true);
+      const favoriteIds = JSON.parse(localStorage.getItem('userFavorites') || '[]');
+      if (favoriteIds.length === 0) {
+        setUserFavorites([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      const allDesigns = await getDesigns();
+      const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
+      const combinedDesigns = [...allDesigns, ...storedDesigns];
+      
+      const favoriteDesigns = combinedDesigns.filter(design => favoriteIds.includes(design.id));
+      setUserFavorites(favoriteDesigns);
+      setIsLoading(false);
+    };
+
+    fetchFavorites();
+  }, []);
 
   return (
     <div className="container py-8 md:py-12">
@@ -16,7 +40,9 @@ export default async function FavoritesPage() {
           The designs you love, all in one place.
         </p>
       </div>
-      {userFavorites.length > 0 ? (
+      {isLoading ? (
+         <p>Loading your favorites...</p>
+      ) : userFavorites.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {userFavorites.map((design) => (
             <DesignCard key={design.id} design={design} />
