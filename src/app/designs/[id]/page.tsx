@@ -1,7 +1,7 @@
 
 'use client';
 
-import { getDesigns, getDesignById, type Design } from "@/lib/mock-data";
+import { getDesigns, type Design } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,11 +18,11 @@ export default function DesignPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function fetchDesign() {
-      const allMockDesigns = await getDesigns();
+      const mockDesigns = await getDesigns();
       const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
-      const allDesigns = [...allMockDesigns, ...storedDesigns];
+      const allDesigns = [...mockDesigns, ...storedDesigns];
       
-      let foundDesign = allDesigns.find((d: Design) => d.id === params.id);
+      const foundDesign = allDesigns.find((d: Design) => d.id === params.id);
       
       setDesign(foundDesign);
     }

@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Lock } from "lucide-react";
-import Link from "next/link";
 import { PurchaseButton } from "@/components/purchase-button";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,11 +19,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         async function fetchDesign() {
-            const allMockDesigns = await getDesigns();
+            const mockDesigns = await getDesigns();
             const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
-            const allDesigns = [...allMockDesigns, ...storedDesigns];
+            const allDesigns = [...mockDesigns, ...storedDesigns];
             
-            let foundDesign = allDesigns.find((d: Design) => d.id === params.id);
+            const foundDesign = allDesigns.find((d: Design) => d.id === params.id);
             
             setDesign(foundDesign);
         }
