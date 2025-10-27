@@ -4,9 +4,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-const API_URL = '/api'; // Use the proxied URL
-
-// Define the User type based on your Mongoose model
 interface User {
   _id: string;
   email: string;
@@ -32,86 +29,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${API_URL}/auth/me`);
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
-    };
-
-    fetchUser();
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+    // This is a mock login. In a real app, you would validate against a backend.
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
+      // Mock validation: check if a user with this email exists in mock local storage users
+      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const existingUser = storedUsers.find((u: any) => u.email === email);
+
+      if (existingUser) {
+        // Mock password check - in a real app, this is insecure.
+        // This is for demonstration purposes only.
+        if (existingUser.password === password) {
+          const userToSave = { ...existingUser };
+          delete userToSave.password; // Don't store password in the user object
+          setUser(userToSave);
+          localStorage.setItem('user', JSON.stringify(userToSave));
+          setIsLoading(false);
+          return userToSave;
+        }
       }
-      setUser(data.user);
-      return data;
+      throw new Error('Invalid email or password.');
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const signup = async (userData: Omit<User, '_id' | 'profileImageUrl' | 'password'> & { password?: string }) => {
+    setIsLoading(true);
+    try {
+      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const existingUser = storedUsers.find((u: any) => u.email === userData.email);
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists.');
+      }
+      
+      const newUser = {
+        _id: `user_${Date.now()}`,
+        ...userData
+      };
+      
+      const updatedUsers = [...storedUsers, newUser];
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      // Don't log in automatically. The user will be redirected to the login page.
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signup = async (userData: Omit<User, '_id' | 'profileImageUrl'> & { password?: string }) => {
-    setIsLoading(true);
-    try {
-        const res = await fetch(`${API_URL}/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.message || `Request failed with status ${res.status}`);
-        }
-        
-        // After successful signup, redirect to login page instead of auto-logging in
-        
-        return data;
-    } finally {
-        setIsLoading(false);
-    }
-  };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-        await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
-    } catch (error) {
-        console.error("Logout failed but proceeding with client-side cleanup", error)
-    } finally {
-        setUser(null);
-        router.push('/');
-        router.refresh();
-        setIsLoading(false);
-    }
+    setUser(null);
+    localStorage.removeItem('user');
+    router.push('/');
+    router.refresh(); // Force a refresh to clear state in other components
   };
 
   const updateUser = async (userData: Partial<User>) => {
     if (user) {
-        // In a real app, you would also make an API call to update the user in the database
-        const updatedUser = { ...user, ...userData };
-        setUser(updatedUser);
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     }
   };
 
