@@ -85,8 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error(data.message || `Request failed with status ${res.status}`);
         }
         
-        // After successful signup, log the user in to set the cookie
-        await login(userData.email, userData.password || '');
+        // After successful signup, redirect to login page instead of auto-logging in
         
         return data;
     } finally {

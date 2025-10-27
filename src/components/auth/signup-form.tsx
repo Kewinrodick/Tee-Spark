@@ -66,9 +66,9 @@ export function SignupForm() {
         await signup(values);
         toast({
             title: "Account Created!",
-            description: "You've successfully signed up and are now logged in.",
+            description: "Please log in to continue.",
         });
-        router.push("/");
+        router.push("/login");
     } catch (error: any) {
         toast({
             variant: "destructive",
