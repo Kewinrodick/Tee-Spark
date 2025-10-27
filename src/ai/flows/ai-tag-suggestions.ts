@@ -32,14 +32,13 @@ export async function suggestTags(input: SuggestTagsInput): Promise<SuggestTagsO
 const suggestTagsPrompt = ai.definePrompt({
   name: 'suggestTagsPrompt',
   input: {schema: SuggestTagsInputSchema},
-  output: {schema: SuggestTagsOutputSchema},
   prompt: `You are an expert in generating relevant tags for design uploads on a T-shirt design selling platform.
 
   Given the following design description, suggest 5-10 relevant tags that would help users discover the design.
 
   Design Description: {{{designDescription}}}
 
-  The tags should be comma separated, and each tag should be a single word or short phrase.
+  The tags should be comma separated, and each tag should be a single word or short phrase. Your output should ONLY be the comma-separated list of tags and nothing else.
 
   Example Output:
   tag1, tag2, tag3, tag4, tag5
@@ -53,7 +52,8 @@ const suggestTagsFlow = ai.defineFlow(
     outputSchema: SuggestTagsOutputSchema,
   },
   async input => {
-    const {output} = await suggestTagsPrompt(input);
-    return output!;
+    const {text} = await suggestTagsPrompt(input);
+    const tags = text.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    return { tags };
   }
 );
