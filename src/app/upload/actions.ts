@@ -5,7 +5,7 @@ import { suggestTags as suggestTagsAI, type SuggestTagsInput } from '@/ai/flows/
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { v4 as uuidv4 } from 'uuid';
-import { getDesigns } from '@/lib/mock-data';
+import type { Design } from '@/lib/mock-data';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -15,10 +15,13 @@ const uploadSchema = z.object({
   image: z.string().min(1, 'Design file is required.'),
 });
 
-export async function uploadDesign(formData: FormData, userId: string) {
+// This function will now be responsible for adding the new design to a client-side store (localStorage)
+// This is a client-side action despite the 'use server' directive, as it is called from a client component and interacts with localStorage.
+// The actual storage happens in the component that calls this.
+export async function uploadDesign(values: z.infer<typeof uploadSchema>, userEmail: string) {
   'use server';
 
-  if (!userId) {
+  if (!userEmail) {
      return {
       errors: {
         _form: ['You must be logged in to upload a design.'],
@@ -26,15 +29,7 @@ export async function uploadDesign(formData: FormData, userId: string) {
     };
   }
 
-  const rawData = {
-    title: formData.get('title'),
-    description: formData.get('description'),
-    price: formData.get('price'),
-    tags: formData.getAll('tags[]'),
-    image: formData.get('image'),
-  };
-
-  const validatedFields = uploadSchema.safeParse(rawData);
+  const validatedFields = uploadSchema.safeParse(values);
 
   if (!validatedFields.success) {
     return {
@@ -43,14 +38,35 @@ export async function uploadDesign(formData: FormData, userId: string) {
   }
   
   try {
-    // Mock the API call by using the mock-data function
-    await getDesigns(); 
+    const newDesign: Design = {
+        id: uuidv4(),
+        title: validatedFields.data.title,
+        description: validatedFields.data.description,
+        image: {
+            id: uuidv4(),
+            imageUrl: validatedFields.data.image,
+            description: validatedFields.data.title,
+            imageHint: validatedFields.data.tags.slice(0,2).join(' '),
+        },
+        price: validatedFields.data.price,
+        designer: {
+            id: userEmail,
+            name: userEmail.split('@')[0], // Mock designer name from email
+            avatarUrl: `https://i.pravatar.cc/150?u=${userEmail}`,
+        },
+        likes: 0,
+        commentsCount: 0,
+    }
+    
+    // The component calling this action will handle localStorage persistence.
+    // We just return the created design object.
     
     revalidatePath('/');
     revalidatePath('/my-designs');
-    return { success: true };
+
+    return { success: true, design: newDesign };
   } catch (error: any) {
-    console.error('Error uploading design:', error);
+    console.error('Error creating design object:', error);
     return {
       errors: {
         _form: [`An unexpected error occurred during upload: ${error.message}`],

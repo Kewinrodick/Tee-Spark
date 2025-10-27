@@ -1,10 +1,30 @@
-import { DesignCard } from '@/components/design-card';
-import { getDesigns } from '@/lib/mock-data';
 
-export default async function MyDesignsPage() {
-  // In a real app, you would fetch designs for the currently logged-in user.
-  const allDesigns = await getDesigns();
-  const userDesigns = allDesigns.slice(0, 4); // Mock: show first 4 designs as "user's"
+'use client';
+
+import { DesignCard } from '@/components/design-card';
+import { type Design } from '@/lib/mock-data';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Paintbrush } from 'lucide-react';
+
+export default function MyDesignsPage() {
+  const [userDesigns, setUserDesigns] = useState<Design[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    // Fetch designs from localStorage
+    const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
+    const allMockDesigns = JSON.parse(localStorage.getItem('allDesigns') || '[]');
+
+    // In a real app, you would fetch designs for the currently logged-in user from your API
+    const userEmail = JSON.parse(localStorage.getItem('user') || '{}')?.email;
+    const mockUserDesigns = allMockDesigns.filter((d: Design) => d.designer.id === userEmail).slice(0,4);
+    
+    setUserDesigns([...mockUserDesigns, ...storedDesigns]);
+    setIsLoading(false);
+  }, []);
 
   return (
     <div className="container py-8 md:py-12">
@@ -14,16 +34,22 @@ export default async function MyDesignsPage() {
           Here are the masterpieces you've shared with the world.
         </p>
       </div>
-      {userDesigns.length > 0 ? (
+      {isLoading ? (
+        <p>Loading your designs...</p>
+      ) : userDesigns.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {userDesigns.map((design) => (
             <DesignCard key={design.id} design={design} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 border-2 border-dashed border-muted rounded-lg">
+        <div className="text-center py-16 border-2 border-dashed border-muted rounded-lg flex flex-col items-center justify-center">
+            <Paintbrush className="h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold">No designs yet!</h2>
           <p className="text-muted-foreground mt-2">Looks like you haven't uploaded any designs. Start creating!</p>
+          <Button asChild className="mt-6">
+            <Link href="/upload">Upload Your First Design</Link>
+          </Button>
         </div>
       )}
     </div>

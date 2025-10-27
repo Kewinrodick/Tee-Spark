@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Wand2, X, Image as ImageIcon, UploadCloud } from 'lucide-react';
+import { Loader2, Wand2, X, UploadCloud } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -155,17 +155,22 @@ export function UploadForm() {
   };
 
   async function onSubmit(values: UploadFormValues) {
-    const formData = new FormData();
-    formData.append('title', values.title);
-    formData.append('description', values.description);
-    formData.append('price', String(values.price));
-    formData.append('image', values.image);
-    values.tags.forEach((tag) => formData.append('tags[]', tag));
-
     startTransition(async () => {
-      const result = await uploadDesign(formData, user?.email || 'guest-user');
+        if (!user) {
+            toast({
+              variant: 'destructive',
+              title: 'Authentication Error',
+              description: 'You must be logged in to upload a design.',
+            });
+            return;
+        }
 
-      if (result?.success) {
+      const result = await uploadDesign(values, user.email);
+
+      if (result?.success && result.design) {
+        const existingDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
+        localStorage.setItem('userDesigns', JSON.stringify([...existingDesigns, result.design]));
+        
         toast({
           title: 'Design Uploaded!',
           description: 'Your design is now live on the platform.',
@@ -383,5 +388,3 @@ export function UploadForm() {
     </Card>
   );
 }
-
-    
