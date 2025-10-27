@@ -2,10 +2,14 @@
 
 import { jsPDF } from 'jspdf';
 import type { Design } from './mock-data';
-import type { User } from 'firebase/auth';
+
+type User = {
+    displayName?: string;
+    email: string;
+}
 
 // This function is a placeholder for sending an email.
-// In a real application, you would use a service like Firebase Functions with Nodemailer, SendGrid, or Mailgun.
+// In a real application, you would use a service like Nodemailer, SendGrid, or Mailgun from your backend.
 const sendEmail = async (to: string, subject: string, body: string, pdfDataUri: string) => {
   console.log(`
     --- Mock Email ---
@@ -15,10 +19,9 @@ const sendEmail = async (to: string, subject: string, body: string, pdfDataUri: 
     Attachment: PDF is attached.
     --- End Mock Email ---
   `);
-  // Here you would integrate with your email sending service.
-  // Example with a hypothetical email service:
+  // In a real MERN app, this would be a `fetch` call to an email-sending endpoint on your Express server.
   //
-  // await fetch('/api/send-email', {
+  // await fetch('http://localhost:5000/api/send-email', {
   //   method: 'POST',
   //   headers: { 'Content-Type': 'application/json' },
   //   body: JSON.stringify({ to, subject, body, attachment: pdfDataUri }),

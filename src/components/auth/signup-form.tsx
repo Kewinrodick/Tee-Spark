@@ -30,12 +30,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
 
 const signupSchema = z.object({
   username: z.string().min(2, "Name must be at least 2 characters."),
@@ -48,16 +44,18 @@ const signupSchema = z.object({
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
+// Mock signup
+const mockSignup = async (values: SignupFormValues) => {
+    // In a real app, this would be a fetch call to your backend API
+    // to create a user in MongoDB.
+    console.log("Signing up user:", values);
+    localStorage.setItem('user', JSON.stringify({ email: values.email, name: values.username }));
+    return { success: true };
+};
+
 export function SignupForm() {
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -69,52 +67,23 @@ export function SignupForm() {
   });
 
   const onSubmit = async (values: SignupFormValues) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        values.email,
-        values.password
-      );
-      const user = userCredential.user;
-
-      const userRef = doc(firestore, "users", user.uid);
-      // Use non-blocking write and handle potential errors via the global error handler
-      setDocumentNonBlocking(userRef, {
-        id: user.uid,
-        email: values.email,
-        username: values.username,
-        role: values.role,
-        profileImageUrl: `https://i.pravatar.cc/150?u=${user.uid}`,
-      }, { merge: true });
-
+    const result = await mockSignup(values);
+    if (result.success) {
       toast({
         title: "Account Created!",
         description: "You've successfully signed up.",
       });
       router.push("/");
-    } catch (error) {
-      const authError = error as AuthError;
-      let errorMessage = "An unexpected error occurred. Please try again.";
-      if (authError.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already registered. Please login or use a different email.';
-      } else if (authError.code === 'auth/weak-password') {
-        errorMessage = 'The password is too weak. Please use at least 6 characters.';
-      } else if (authError.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Signup Failed",
-        description: errorMessage,
-      });
-      console.error("Signup error:", authError);
+      router.refresh();
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Signup Failed",
+            description: "An unexpected error occurred. Please try again.",
+          });
     }
   };
 
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <Card className="w-full max-w-sm">

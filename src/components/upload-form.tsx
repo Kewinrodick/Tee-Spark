@@ -29,7 +29,6 @@ import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useUser } from '@/firebase';
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -38,9 +37,8 @@ const uploadSchema = z.object({
     .min(20, 'Description must be at least 20 characters to get AI suggestions.'),
   price: z.coerce.number().min(1, 'Price must be at least $1.'),
   tags: z.array(z.string()).min(1, 'Please add at least one tag.'),
-  image: z
-    .any()
-    .refine((file) => file instanceof File && file.size > 0, 'Design file is required.'),
+  // We remove the image validation from the form as we are not handling file uploads
+  // in this simplified MERN example. It will use a placeholder.
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -51,12 +49,17 @@ export function UploadForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<{email: string} | null>(null);
 
-  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if(storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(uploadSchema),
@@ -67,10 +70,6 @@ export function UploadForm() {
       tags: [],
     },
   });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -121,24 +120,15 @@ export function UploadForm() {
   };
 
   async function onSubmit(values: UploadFormValues) {
-    if (!user) {
-        toast({
-            variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'You must be logged in to upload a design.',
-        });
-        return;
-    }
-
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('description', values.description);
     formData.append('price', String(values.price));
     values.tags.forEach((tag) => formData.append('tags[]', tag));
-    formData.append('image', values.image);
+    // No image is appended as we are using a placeholder
 
     startTransition(async () => {
-      const result = await uploadDesign(formData, user.uid);
+      const result = await uploadDesign(formData, user?.email || 'guest-user');
 
       if (result?.success) {
         toast({
@@ -165,77 +155,20 @@ export function UploadForm() {
     });
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      form.setValue('image', file, { shouldValidate: true });
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      form.setValue('image', undefined, { shouldValidate: true });
-      setImagePreview(null);
-    }
-  };
-
-  if (!mounted) return null;
-
-  if (!user) {
-    return (
-        <Card>
-            <CardContent className="p-6 text-center">
-                <p>Please <a href="/login" className="underline text-primary">log in</a> to upload a design.</p>
-            </CardContent>
-        </Card>
-    )
-  }
-
   return (
     <Card>
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Upload Section */}
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Design File</FormLabel>
-                  <FormControl>
-                    <div
-                      className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg cursor-pointer hover:border-primary transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        onChange={handleFileChange}
-                        accept="image/png, image/jpeg, image/webp"
-                      />
-                      {imagePreview ? (
-                        <Image
-                          src={imagePreview}
-                          alt="Design preview"
-                          fill
-                          className="object-contain rounded-lg"
-                        />
-                      ) : (
-                        <div className="text-center text-muted-foreground">
-                          <ImageIcon className="mx-auto h-12 w-12" />
-                          <p className="mt-2">Click or drag file to this area to upload</p>
-                          <p className="text-xs">PNG, JPG, WEBP up to 10MB</p>
-                        </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div
+                className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg"
+            >
+                <div className="text-center text-muted-foreground">
+                    <ImageIcon className="mx-auto h-12 w-12" />
+                    <p className="mt-2">Image upload is disabled for this prototype.</p>
+                    <p className="text-xs">A placeholder image will be used.</p>
+                </div>
+            </div>
 
             {/* Title */}
             <FormField
@@ -348,9 +281,9 @@ export function UploadForm() {
             />
 
             {/* Submit */}
-            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !user}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? 'Uploading...' : 'Upload Design'}
+              {isSubmitting ? 'Uploading...' : !user ? 'Please log in to upload' : 'Upload Design'}
             </Button>
           </form>
         </Form>

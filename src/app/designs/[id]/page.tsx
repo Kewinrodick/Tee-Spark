@@ -1,12 +1,10 @@
-
-import { getDesignById } from "@/lib/mock-data";
+import { getDesignById } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, ShoppingCart } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
@@ -47,6 +45,7 @@ export default async function DesignPage({ params }: { params: { id: string } })
           <p className="text-muted-foreground leading-relaxed">{design.description}</p>
           
           <div className="flex flex-wrap gap-2">
+            {/* In a real app, these tags would come from the design object */}
             <Badge variant="secondary">Abstract</Badge>
             <Badge variant="secondary">Minimalist</Badge>
             <Badge variant="secondary">Modern</Badge>

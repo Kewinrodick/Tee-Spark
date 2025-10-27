@@ -23,11 +23,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError, signInWithEmailAndPassword } from "firebase/auth";
-import { useEffect, useState } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -36,15 +33,21 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Mock authentication
+const mockLogin = async (values: LoginFormValues) => {
+  if (values.email && values.password) {
+    // In a real app, this would be a fetch call to your backend API
+    // For now, we'll just simulate a successful login
+    localStorage.setItem('user', JSON.stringify({ email: values.email, name: 'Test User' }));
+    return { success: true };
+  }
+  return { success: false, error: "Invalid credentials" };
+};
+
+
 export function LoginForm() {
-  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -55,34 +58,22 @@ export function LoginForm() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+    const result = await mockLogin(values);
+    if (result.success) {
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
       router.push("/");
-    } catch (error) {
-      const authError = error as AuthError;
-      let errorMessage = "An unexpected error occurred. Please try again.";
-      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid email or password. Please try again.';
-      } else if (authError.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
-      }
-      
+      router.refresh(); // Refresh to update header state
+    } else {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: errorMessage,
+        description: result.error || "An unexpected error occurred.",
       });
-      console.error("Login error:", authError);
     }
   };
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <Card className="w-full max-w-sm">
