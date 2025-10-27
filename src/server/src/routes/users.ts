@@ -14,22 +14,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create a new user (for admin purposes, signup is in auth route)
-router.post('/', async (req, res) => {
-  const user = new User({
-    email: req.body.email,
-    username: req.body.username,
-    password: req.body.password, // This will be hashed by the pre-save hook
-    role: req.body.role,
-    profileImageUrl: req.body.profileImageUrl,
-  });
-
-  try {
-    const newUser = await user.save();
-    res.status(201).json(newUser);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
+// The POST route for creating a user here is redundant and insecure.
+// User creation should be handled by the /api/auth/signup endpoint,
+// which correctly hashes passwords and handles authentication.
+// This endpoint is removed to prevent conflicts and security issues.
 
 export default router;
