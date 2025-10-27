@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -24,11 +25,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Wand2, X, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Wand2, X, Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const uploadSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -37,8 +41,9 @@ const uploadSchema = z.object({
     .min(20, 'Description must be at least 20 characters to get AI suggestions.'),
   price: z.coerce.number().min(1, 'Price must be at least $1.'),
   tags: z.array(z.string()).min(1, 'Please add at least one tag.'),
-  // We remove the image validation from the form as we are not handling file uploads
-  // in this simplified MERN example. It will use a placeholder.
+  image: z.string().refine((val) => val.length > 0, {
+    message: 'Design file is required.',
+  }),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -50,6 +55,8 @@ export function UploadForm() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
   const [user, setUser] = useState<{email: string} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const { toast } = useToast();
   const router = useRouter();
@@ -68,8 +75,33 @@ export function UploadForm() {
       description: '',
       price: 10,
       tags: [],
+      image: '',
     },
   });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        form.setError('image', { type: 'manual', message: `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        form.setError('image', { type: 'manual', message: 'Only .jpg, .jpeg, .png and .webp formats are supported.' });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        form.setValue('image', base64String, { shouldValidate: true });
+        form.clearErrors('image');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -124,8 +156,8 @@ export function UploadForm() {
     formData.append('title', values.title);
     formData.append('description', values.description);
     formData.append('price', String(values.price));
+    formData.append('image', values.image);
     values.tags.forEach((tag) => formData.append('tags[]', tag));
-    // No image is appended as we are using a placeholder
 
     startTransition(async () => {
       const result = await uploadDesign(formData, user?.email || 'guest-user');
@@ -160,15 +192,55 @@ export function UploadForm() {
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div
-                className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg"
-            >
-                <div className="text-center text-muted-foreground">
-                    <ImageIcon className="mx-auto h-12 w-12" />
-                    <p className="mt-2">Image upload is disabled for this prototype.</p>
-                    <p className="text-xs">A placeholder image will be used.</p>
-                </div>
-            </div>
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Design File</FormLabel>
+                   <FormControl>
+                    <div
+                      className="relative flex justify-center items-center h-64 w-full border-2 border-dashed border-muted rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+                       onClick={() => fileInputRef.current?.click()}
+                    >
+                      {imagePreview ? (
+                        <>
+                          <Image src={imagePreview} alt="Design preview" fill className="object-contain rounded-lg p-2" />
+                           <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 z-10 h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setImagePreview(null);
+                                form.setValue('image', '', { shouldValidate: true });
+                                if(fileInputRef.current) fileInputRef.current.value = '';
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                        </>
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">
+                            <UploadCloud className="mx-auto h-12 w-12" />
+                            <p className="mt-2 font-semibold">Click to upload or drag and drop</p>
+                            <p className="text-xs mt-1">PNG, JPG, WEBP up to 4MB</p>
+                        </div>
+                      )}
+                       <Input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                        />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Title */}
             <FormField

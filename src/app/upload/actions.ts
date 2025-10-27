@@ -13,10 +13,7 @@ const uploadSchema = z.object({
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   price: z.coerce.number().min(1, 'Price must be at least $1.'),
   tags: z.array(z.string()).min(1, 'Please add at least one tag.'),
-  // For simplicity, we are not handling file uploads to the backend in this step.
-  // The image will be a placeholder. In a real MERN app, you'd handle this with
-  // something like multer on your Express server.
-  // image: z.any().refine(file => file?.size > 0, 'Design file is required.'),
+  image: z.string().min(1, 'Design file is required.'),
 });
 
 export async function uploadDesign(formData: FormData, userId: string) {
@@ -35,7 +32,7 @@ export async function uploadDesign(formData: FormData, userId: string) {
     description: formData.get('description'),
     price: formData.get('price'),
     tags: formData.getAll('tags[]'),
-    // image: formData.get('image'),
+    image: formData.get('image'),
   };
 
   const validatedFields = uploadSchema.safeParse(rawData);
@@ -46,7 +43,7 @@ export async function uploadDesign(formData: FormData, userId: string) {
     };
   }
   
-  const { title, description, price, tags } = validatedFields.data;
+  const { title, description, price, tags, image } = validatedFields.data;
 
   try {
     const newDesign = {
@@ -55,8 +52,7 @@ export async function uploadDesign(formData: FormData, userId: string) {
       price,
       tags,
       designerId: userId,
-      // Using a placeholder image for simplicity in the MERN stack transition
-      imageUrl: `https://picsum.photos/seed/${uuidv4()}/600/800`, 
+      imageUrl: image, 
     };
 
     const response = await fetch(`${API_URL}/designs`, {
