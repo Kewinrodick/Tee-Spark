@@ -21,6 +21,7 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
   const [design, setDesign] = useState<Design | null | undefined>(initialDesign);
   const [isFavorite, setIsFavorite] = useState(false);
   const { user } = useAuth();
+  const [animateHeart, setAnimateHeart] = useState(false);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -59,15 +60,19 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
       return;
     }
     
+    setAnimateHeart(true);
+
     const favorites = JSON.parse(localStorage.getItem('userFavorites') || '[]');
     let newFavorites;
 
     if (isFavorite) {
       newFavorites = favorites.filter((favId: string) => favId !== id);
       toast({ title: "Removed from favorites." });
+      setDesign(prev => prev ? { ...prev, likes: prev.likes - 1 } : null);
     } else {
       newFavorites = [...favorites, id];
       toast({ title: "Added to favorites!" });
+      setDesign(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
     }
 
     localStorage.setItem('userFavorites', JSON.stringify(newFavorites));
@@ -140,7 +145,14 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
           
           <div className="flex items-center gap-6 text-muted-foreground">
              <Button variant="ghost" className="flex items-center gap-2 px-2" onClick={handleFavoriteToggle}>
-              <Heart className={cn("h-5 w-5", isFavorite && "fill-current text-primary")} />
+              <Heart 
+                onAnimationEnd={() => setAnimateHeart(false)}
+                className={cn(
+                  "h-5 w-5 transition-colors", 
+                  isFavorite && "fill-primary text-primary",
+                  animateHeart && "animate-pop"
+                )} 
+              />
               <span className="font-medium">{design.likes.toLocaleString()} likes</span>
             </Button>
             <div className="flex items-center gap-2">
