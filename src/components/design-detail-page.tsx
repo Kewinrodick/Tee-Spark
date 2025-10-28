@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, ShoppingCart } from "lucide-react";
+import { Heart, MessageCircle, Send, ShoppingCart } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,18 +16,35 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { Textarea } from "./ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { formatDistanceToNow } from 'date-fns';
+
+type Comment = {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+  };
+  text: string;
+  date: string;
+};
 
 export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: Design | undefined, id: string }) {
   const [design, setDesign] = useState<Design | null | undefined>(initialDesign);
   const [isFavorite, setIsFavorite] = useState(false);
   const { user } = useAuth();
-  const [animateHeart, setAnimateHeart] = useState(false);
+  const [animateHeart, setAnimateHeart] = useState(animateHeart);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchDesign() {
+    async function fetchDesignAndComments() {
         // On the client, we can now check localStorage
         const storedDesigns = JSON.parse(localStorage.getItem('userDesigns') || '[]');
         let foundDesign = storedDesigns.find((d: Design) => d.id === id);
@@ -37,10 +54,19 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
         } else if(initialDesign) {
             setDesign(initialDesign);
         }
+
+        // Load comments from localStorage
+        const storedComments = JSON.parse(localStorage.getItem(`comments_${id}`) || '[]');
+        setComments(storedComments);
+
+        // Update initial comment count if it differs from localStorage
+        if (design && storedComments.length !== design.commentsCount) {
+          setDesign(d => d ? { ...d, commentsCount: storedComments.length } : null);
+        }
     }
 
     if (design === undefined) {
-      fetchDesign();
+      fetchDesignAndComments();
     }
     
     // Check for favorite status in localStorage
@@ -77,6 +103,44 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
 
     localStorage.setItem('userFavorites', JSON.stringify(newFavorites));
     setIsFavorite(!isFavorite);
+  };
+  
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Please log in',
+        description: 'You need to be logged in to comment.',
+      });
+      router.push('/login');
+      return;
+    }
+    if (newComment.trim() === '') return;
+
+    setIsSubmittingComment(true);
+
+    const comment: Comment = {
+      id: `comment_${Date.now()}`,
+      user: {
+        id: user.email,
+        name: user.username,
+        avatarUrl: user.profileImageUrl || `https://i.pravatar.cc/150?u=${user.email}`,
+      },
+      text: newComment,
+      date: new Date().toISOString(),
+    };
+
+    // Simulate network delay
+    await new Promise(res => setTimeout(res, 500));
+
+    const updatedComments = [...comments, comment];
+    setComments(updatedComments);
+    localStorage.setItem(`comments_${id}`, JSON.stringify(updatedComments));
+    
+    setDesign(prev => prev ? { ...prev, commentsCount: prev.commentsCount + 1 } : null);
+    setNewComment('');
+    setIsSubmittingComment(false);
   };
 
 
@@ -173,6 +237,66 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
           </div>
         </div>
       </div>
+
+       {/* Comments Section */}
+      <div className="mt-12 md:mt-16">
+        <Card>
+            <CardHeader>
+                <CardTitle>{design.commentsCount.toLocaleString()} Comments</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleCommentSubmit} className="flex flex-col sm:flex-row items-start gap-4 mb-8">
+                    <Avatar>
+                        <AvatarImage src={user?.profileImageUrl || `https://i.pravatar.cc/150?u=${user?.email}`} />
+                        <AvatarFallback>{user?.username?.charAt(0) ?? '?'}</AvatarFallback>
+                    </Avatar>
+                    <div className="w-full relative">
+                        <Textarea
+                        placeholder={user ? "Write a comment..." : "Please log in to leave a comment"}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        disabled={!user || isSubmittingComment}
+                        className="pr-16"
+                        />
+                        <Button 
+                            type="submit" 
+                            size="icon" 
+                            className="absolute right-3 top-3 h-8 w-8"
+                            disabled={!user || !newComment.trim() || isSubmittingComment}
+                        >
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </form>
+
+                <div className="space-y-6">
+                    {comments.length > 0 ? (
+                        comments.map((comment) => (
+                            <div key={comment.id} className="flex items-start gap-4">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={comment.user.avatarUrl} alt={comment.user.name} />
+                                    <AvatarFallback>{comment.user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <p className="font-semibold">{comment.user.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatDistanceToNow(new Date(comment.date), { addSuffix: true })}
+                                        </p>
+                                    </div>
+                                    <p className="text-sm text-foreground/90 mt-1">{comment.text}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">Be the first to comment!</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+
+    
