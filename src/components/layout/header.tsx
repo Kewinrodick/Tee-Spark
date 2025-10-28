@@ -44,7 +44,7 @@ export function Header() {
                 </Link>
             )}
             {user && user.role === 'Buyer' && (
-                 <Link href="/designs" className="transition-colors hover:text-primary text-foreground/80">
+                 <Link href="/browse-designs" className="transition-colors hover:text-primary text-foreground/80">
                     Browse Designs
                 </Link>
             )}
