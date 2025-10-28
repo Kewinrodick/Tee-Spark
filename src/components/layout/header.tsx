@@ -38,9 +38,14 @@ export function Header() {
             <Link href="/#trending-designs" className="transition-colors hover:text-primary text-foreground/80">
               Trending
             </Link>
-            {user && (
+            {user && user.role === 'Designer' && (
                  <Link href="/my-designs" className="transition-colors hover:text-primary text-foreground/80">
                     My Designs
+                </Link>
+            )}
+            {user && user.role === 'Buyer' && (
+                 <Link href="/designs" className="transition-colors hover:text-primary text-foreground/80">
+                    Browse Designs
                 </Link>
             )}
           </nav>
@@ -53,12 +58,14 @@ export function Header() {
               </div>
           ) : user ? (
             <>
-            <Button asChild>
-                <Link href="/upload">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-                </Link>
-            </Button>
+            {user.role === 'Designer' && (
+              <Button asChild>
+                  <Link href="/upload">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload
+                  </Link>
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -84,18 +91,22 @@ export function Header() {
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                  <Link href="/my-designs">
-                    <LayoutGrid className="mr-2 h-4 w-4" />
-                    <span>My Designs</span>
-                  </Link>
-                </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                  <Link href="/purchases">
-                    <ShoppingBag className="mr-2 h-4 w-4" />
-                    <span>My Purchases</span>
-                  </Link>
-                </DropdownMenuItem>
+                {user.role === 'Designer' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-designs">
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      <span>My Designs</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {user.role === 'Buyer' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/purchases">
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      <span>My Purchases</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                  <DropdownMenuItem asChild>
                   <Link href="/favorites">
                     <Heart className="mr-2 h-4 w-4" />
