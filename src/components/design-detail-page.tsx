@@ -35,7 +35,7 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
   const [design, setDesign] = useState<Design | null | undefined>(initialDesign);
   const [isFavorite, setIsFavorite] = useState(false);
   const { user } = useAuth();
-  const [animateHeart, setAnimateHeart] = useState(animateHeart);
+  const [animateHeart, setAnimateHeart] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
