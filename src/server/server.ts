@@ -1,7 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import paymentRoutes from './src/routes/payment';
 import authRoutes from './src/routes/auth';
 import designRoutes from './src/routes/designs';
 import purchaseRoutes from './src/routes/purchases';
@@ -12,7 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/payment', paymentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/designs', designRoutes);
 app.use('/api/purchases', purchaseRoutes);
