@@ -144,17 +144,17 @@ export function DesignDetailPageClient({ initialDesign, id }: { initialDesign: D
           </div>
           
           <div className="flex items-center gap-6 text-muted-foreground">
-             <Button variant="ghost" className="flex items-center gap-2 px-2" onClick={handleFavoriteToggle}>
+             <button className="flex items-center gap-2 group/like" onClick={handleFavoriteToggle}>
               <Heart 
                 onAnimationEnd={() => setAnimateHeart(false)}
                 className={cn(
-                  "h-5 w-5 transition-colors", 
+                  "h-5 w-5 transition-colors group-hover/like:text-primary", 
                   isFavorite && "fill-primary text-primary",
                   animateHeart && "animate-pop"
                 )} 
               />
-              <span className="font-medium">{design.likes.toLocaleString()} likes</span>
-            </Button>
+              <span className="font-medium group-hover/like:text-foreground">{design.likes.toLocaleString()} likes</span>
+            </button>
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-medium">{design.commentsCount.toLocaleString()} comments</span>
